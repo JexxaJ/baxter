@@ -1,0 +1,14 @@
+# local state
+node_modules/
+.DS_Store
+Thumbs.db
+
+# secrets — never committed (§7.4)
+.env
+*.env
+secrets/
+
+# backups — off-host, never in the repo (§7.1)
+backups/
+*.tar.gz
+*.zip
