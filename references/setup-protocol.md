@@ -41,24 +41,24 @@ The one thing setup cannot do alone: **humans put credentials into the vault** (
 
 | Step | Baxter does | Human does | Output |
 |---|---|---|---|
-| 1. Enumerate | Validates the config against schema + S1–S10; confirms all connectors locked; verifies vault paths exist (§8.2) | — | Validated contract, or halt with questions |
-| 2. Learn | Loads each Connector Pack; enumerates each connector's live MCP/REST surface (§8.3); reconciles against the Proficiency profile — gaps update the profile | — | Confirmed capability map per connector |
-| 3. Plan | Produces a written plan: per-connector configuration steps (from pack checklists), workflow definitions, sync-topology jobs, memory namespaces, channel enrollment | — | Written plan |
+| 1. Enumerate | Validates the config against schema + S1–S15; confirms all connectors locked; verifies vault paths exist (§8.2); **probes the Workflow Engine** — if `workflow_engine` is absent, records the harness-native warning (S13); if present, probes the endpoint | — | Validated contract, or halt with questions |
+| 2. Learn | Loads each Connector Pack; enumerates each connector's live MCP/REST surface (§8.3) — including the n8n MCP tool surface (pack: workflow-engine); reconciles against the Proficiency profiles — gaps update the profile | — | Confirmed capability map per connector |
+| 3. Plan | Produces a written plan: per-connector configuration steps (from pack checklists); **native-first sync resolutions** — each declared sync's `via` re-checked against live connector surfaces (native path found → propose switching to `native`, §5 rule 6); for `via: n8n` syncs, a workflow spec (nodes, sub-workflows, Configuration node — authoring standards §7.6 rule 3); memory namespaces; channel enrollment | — | Written plan |
 | 4. Approve | Presents the plan at the approval gate — the owner sees exactly what will be configured, in plain language | **Approves or rejects** | Approved plan |
-| 5. Apply | Executes: credential provisioning (§2a) → connections → workflow definitions → sync jobs → memory namespaces → backup remote (if `backup.mode: private-remote`, add the remote and push the workspace). Deterministic steps → Workflow Engine; judgment → Baxter | Owner adds credentials to the vault when prompted | Configured, connected system |
-| 6. Verify | Runs every connector's Verification smoke tests; confirms each declared sync actually fires | — | Verified evidence, or failure → stop and fix |
-| 7. Document | Writes the resulting state back to the repository — applied config, workflow definitions, updated proficiency notes | — | Versioned, re-appliable record |
+| 5. Apply | Executes: credential provisioning (§2a) → connections → **workflow authoring for `via: n8n` syncs via the n8n MCP tools** (search → schema-check → build → `test_workflow` → `validate_workflow` — never published unvalidated; §7.6 rule 3) → native-integration checks → memory namespaces → backup remote (if `backup.mode: private-remote`, add the remote and push the workspace). Deterministic steps → Workflow Engine; judgment → Baxter | Owner adds credentials to the vault when prompted (n8n MCP token included) | Configured, connected system |
+| 6. Verify | Runs every connector's Verification smoke tests; **per declared sync**: `via: native` → smoke-test the native path end-to-end (test record in, expected effect out); `via: n8n` → run the workflow (`test_workflow`) and confirm the end-to-end effect. Confirms each declared sync actually fires | — | Verified evidence, or failure → stop and fix |
+| 7. Document | Writes the resulting state back to the repository — applied config, **workflow IDs/URLs into each `via: n8n` entry's `workflow` field (S14)**, updated proficiency notes | — | Versioned, re-appliable record |
 
 **Nothing is configured outside these steps** (Constitution §8). A failed verification is a stop, not a shrug: Baxter diagnoses, amends the plan, re-gates, re-applies.
 
 ## 4. Rules
 
-1. **The config is the contract.** Enumerate validates structure (schema) and semantics (S1–S10) before anything else; a malformed contract halts.
+1. **The config is the contract.** Enumerate validates structure (schema) and semantics (S1–S15) before anything else; a malformed contract halts.
 2. **Plan → Approve → Apply, always.** Configuring a live CRM or accounting system is irreversible; the human gate sits before Apply, and verification must pass before anything is "done."
 3. **Credentials move once, through the vault.** Owner → vault → Secrets Service → role-scoped use. Baxter references paths; it never sees, stores, or logs values (§7.4).
-4. **Deterministic first.** Syncs, contact routing, and scheduled jobs are Workflow Engine definitions — declared in `sync_topology`, never improvised (§8.5 rule 4).
-5. **Smoke-test everything declared.** Each connector's pack defines its tests (pull a record, push a record, fire a sync); a deployment is verified only when every declared sync fires end-to-end.
-6. **Document or it didn't happen.** Applied state is written back to the repository — the deployment becomes re-runnable (rebuild = apply from repo + verify, §7.1 rule 4).
+4. **Deterministic first — native first among deterministics.** Syncs, contact routing, and scheduled jobs are declared in `sync_topology` and never improvised (§8.5 rule 4); before any engine workflow is built, the native path is re-checked (§5 rule 6). Workflow authoring follows the n8n pack's authoring standards (§7.6 rule 3).
+5. **Smoke-test everything declared.** Each connector's pack defines its tests (pull a record, push a record, fire a sync); a deployment is verified only when every declared sync fires end-to-end — native syncs via their native path, engine syncs via `test_workflow` plus the end-to-end effect.
+6. **Document or it didn't happen.** Applied state is written back to the repository — including every workflow ID (S14) — the deployment becomes re-runnable (rebuild = apply from repo + verify, §7.1 rule 4).
 
 ## 4. Outputs
 
@@ -75,6 +75,12 @@ The one thing setup cannot do alone: **humans put credentials into the vault** (
 - **Failed smoke test** → diagnose, amend plan, re-gate, re-apply. A sync that cannot be verified is not configured — it is an open item.
 - **Owner rejects the plan** → back to Plan with corrections recorded, same as onboarding Stage 6.
 
+- **Missing or malformed config** → halt, report, ask. Setup never patches a bad contract.
+- **Workflow Engine unreachable at Enumerate** → guided open item with the deployment instructions (n8n pack); resume when reachable — the engine is never skipped silently (S13).
+- **Vault path missing at Apply** → stop that connector's leg; guide the owner (§2a); resume — never proceed uncredentialed.
+- **Failed smoke test** → diagnose, amend plan, re-gate, re-apply. A sync that cannot be verified is not configured — it is an open item.
+- **Owner rejects the plan** → back to Plan with corrections recorded, same as onboarding Stage 6.
+
 ## 6. Done
 
-Setup is complete when: every in-scope connector is connected and smoke-tested; every declared sync fires; every gate maps to a verified approver; and the resulting state is committed to the repository. From then on, the deployment runs — and changes flow repository → deploy, never the reverse (§7.2).
+Setup is complete when: every in-scope connector is connected and smoke-tested; every declared sync fires — native via its native path, engine-run via verified workflows; **every `via: n8n` entry has its workflow ID recorded (S14)**; every gate maps to a verified approver; and the resulting state is committed to the repository. From then on, the deployment runs — and changes flow repository → deploy, never the reverse (§7.2).

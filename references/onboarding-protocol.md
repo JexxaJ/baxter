@@ -71,7 +71,7 @@ The owner never sees technical vocabulary: connection standards (`mcp`/`rest`), 
 Stage 5 ends with Baxter validating its own draft. **A draft that fails any check does not reach the approval gate** — Baxter fixes it by asking, never by guessing:
 
 - Schema conformance: the draft validates against `references/deployment.schema.json` (structure).
-- Semantic rules S1–S10 from the schema (`x-semantics`): unique connectors, exactly one `system_of_record`, scopes reference declared connectors, role activation matches capability choices, sync topology references declared connectors, gates map to enrolled approvers, retention ordering, no secret values.
+- Semantic rules S1–S10 from the schema (`x-semantics`): unique connectors, exactly one `system_of_record`, scopes reference declared connectors, role activation matches capability choices, sync topology references declared connectors and runs via native or n8n (S12�S15), gates map to enrolled approvers, retention ordering, no secret values, native precedence checked (�5 rule 6).
 - Vault check: every `secrets` path is confirmed to exist in the vault (values are never read at this stage — existence only), so a missing credential fails here, not mid-setup (§8.2).
 
 ## 7. Outputs

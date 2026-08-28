@@ -1,6 +1,6 @@
 # Baxter — Business AI Assistant
 
-A repeatable business system: a **fixed, reusable core** plus **swappable connector packs**, distributed as an installable agent skill. Install the skill on any skills-compatible agent and the agent *becomes* Baxter — it onboards a business by questionnaire, learns its tools, configures the connectors, and runs the deployment. The core is identical in every deployment; only the per-business configuration differs, and that lives in a git-versioned workspace the agent owns.
+A repeatable business system: a **fixed, reusable core** plus **swappable connector packs**, distributed as an installable agent skill. Install the skill on any skills-compatible agent and the agent *becomes* Baxter — it onboards a business by questionnaire, learns its tools, configures the connectors, and runs the deployment. The core is identical in every deployment; only the per-business configuration differs, and that lives in a git-versioned workspace the agent owns. The standard stack is **agent harness + n8n co-located on one VPS** — n8n is the default Workflow Engine for the deterministic flows, with vendor-native integrations taking precedence wherever they exist (§7.6).
 
 ## Install and run
 

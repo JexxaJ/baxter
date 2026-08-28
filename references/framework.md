@@ -171,6 +171,7 @@ Connectors are business capabilities layered onto the core. Illustrative set:
 3. Exactly one connector per deployment is the system of record for customer data (the CRM). Connectors may not keep parallel copies.
 4. Any connector action that is public-facing or irreversible passes the human approval gate via the Messaging Channel.
 5. Connect via **MCP** wherever the vendor provides an MCP server; otherwise use the documented REST API. The connection standard is chosen once per connector, never per deployment.
+6. **Native integration precedence.** Where a connector offers a tight, vendor-native integration (or a direct MCP/API path) that fulfils a sync, that native path **takes precedence** over building a Workflow Engine job — the engine is used only where no native path exists. Every declared sync records how it runs (`via: native | n8n`, §7.6); only engine-run syncs become workflows.
 
 ---
 
@@ -324,6 +325,31 @@ The core **requires** long-term memory — Baxter cannot operate without it (§7
 4. **Lifecycle is scheduled, not ad-hoc:** a deterministic trigger in the Workflow Engine fires; summarisation (judgment) goes to the owning specialist; pruning and retirement (deterministic) run in the Workflow Engine.
 5. **Memory joins backup and restore drills** (§7.1).
 
+### 7.6 The Workflow Engine — Mechanism and Deployment Decision
+
+The Workflow Engine (§2) is the deterministic automation layer: it executes the predefined, judgment-free work — cross-connector syncs, scheduled jobs, webhook handling, routing and transformation. Judgment and content generation never enter it — ever.
+
+**Standard stack: n8n, self-hosted.** The default Workflow Engine provider is **n8n** — open source, self-hosted, MCP-native — configured and driven by Baxter through the **official n8n MCP server**. Baxter authors, tests, validates, and publishes workflows via the MCP tool surface; it never hand-writes workflow JSON from memory (§8.3). The engine choice is recorded in the Deployment Config (§8.2):
+
+| Decision | Options | Default / guidance |
+|---|---|---|
+| Provider | `n8n` · `harness-native` | `n8n` — the standard stack. Optional-with-warning: absent → the deployment runs harness-native and Baxter records the risk (S13) |
+| Deployment | `internal` · `external` | `internal` — n8n co-located on the same VPS as the harness (Docker). `external` — separate host, for isolation or scale |
+| Endpoint | base URL | `http://localhost:5678` for internal — a sensible default, confirmed at setup, never guessed |
+| Connection | `mcp` | MCP-first via the official n8n MCP server (§5 rule 5) |
+| Secrets | vault path | `vault/connectors/n8n` — the MCP bearer token; humans store values (§7.4 rule 6: n8n's credential store is component-local; workflow JSON never contains secrets) |
+
+> **Hosting note:** the standard deployment runs the harness on a **VPS** with n8n co-located (`internal`). Harnesses that cannot host Docker sidecars (e.g., Hermes Cloud) cannot serve the standard stack — they pair only with an `external` engine or fall back to `harness-native`.
+
+**Rules:**
+
+1. **Native integration precedence.** Before any sync is built as a Workflow Engine job, Baxter checks for a connector-native path — a vendor-native integration or a direct API/MCP call. **Native wins**; the engine fills only the gaps (§5 rule 6). Workflows are built only where required.
+2. **Syncs are declared, never improvised.** Every sync — native or engine — is declared in `sync_topology` with its `via` (§8.5 rule 4, S12). A sync that is neither declared nor explicitly declined is a gap Baxter flags, never silently drops (S15).
+3. **Authoring standards.** Workflows are authored only through the n8n MCP tool surface (search nodes, verify schemas, build, test, validate) — never from memory; native n8n nodes over Code nodes; small modular sub-workflows over monoliths; one "Configuration" node as the single adjustable-variables entry point, which never holds secrets. A workflow is activated only after test → validate → verify.
+4. **Credentials stay component-local and human-set.** n8n keeps its own credential store for its own workflows (§7.4 rule 6); the vault path in the config points at the MCP token. No secrets in workflow JSON, ever.
+5. **Definitions are config (§7.2).** Workflow definitions and IDs are recorded in the workspace at setup Document (§8.4); n8n workflows join the §7.1 backup scope alongside the Workflow Engine definitions they are.
+6. **Classification default: ambiguous → judgment.** A task runs in the Workflow Engine only if its steps are predefined, its inputs well-defined, its outcome repeatable, and it requires no interpretation. If classification is ambiguous, Baxter treats the work as judgment — an agent never downgrades work into the deterministic layer to avoid scrutiny.
+
 ---
 
 ## 8. System Setup & Self-Configuration
@@ -415,13 +441,26 @@ channels:
     staff: [t.me/staff1-handle, t.me/staff2-handle]
   customer_chat: []                       # website widget / whatsapp — empty = not activated
 
-sync_topology:                            # declared, never guessed (§8.5 rule 4)
+workflow_engine:                           # OPTIONAL — preferred; warn if absent (§7.6, S13)
+  provider: n8n                            # n8n | harness-native — n8n is the standard stack
+  deployment: internal                     # internal (Docker co-located) | external
+  endpoint: http://localhost:5678          # default for internal; confirmed at setup
+  secrets: vault/connectors/n8n            # MCP bearer token — vault path, NEVER values (§7.4)
+
+sync_topology:                            # declared, never guessed (§8.5 rule 4); native wins (§5 rule 6)
+  - from: crm
+    to: accounting
+    what: invoicing
+    via: native                           # vendor-native integration — no workflow built
   - from: crm
     to: email-marketing
     what: new_contact_syncs_to_tagged_list
+    via: n8n                              # engine-built — authoring standards §7.6 rule 3
+    workflow: crm_to_email_contact_sync   # recorded by setup Document (S14)
   - from: accounting
     to: crm
     what: invoice_status_updates_job
+    via: n8n
 
 approval_gates:                           # each gate maps to a named approver from `channels.approvers`
   default: owner                          # owner only — never staff

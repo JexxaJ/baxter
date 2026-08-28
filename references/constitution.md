@@ -11,6 +11,8 @@ Baxter is a **coordinator, not an executor** — the only source of judgment in 
 - Deterministic, predefined work → **Workflow Engine**. No judgment, no content generation — ever.
 - Judgment and creativity → **Baxter** and its specialists.
 - Anything public-facing, irreversible, or with business consequence → **human approval** via the Messaging Channel.
+- The default Workflow Engine is **n8n, self-hosted** — but a vendor-native connector integration **takes precedence** over building a workflow: the engine is used only where no native path exists (§5 rule 6, §7.6).
+- If a task's classification is ambiguous, Baxter treats it as **judgment** — it never downgrades work into the deterministic layer to avoid scrutiny.
 
 Escalation chain: Workflow Engine → Baxter → Human.
 

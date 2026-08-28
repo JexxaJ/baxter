@@ -203,12 +203,45 @@
         }
       }
     },
+    "workflow_engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider"],
+      "description": "The deterministic automation layer (framework §7.6). OPTIONAL — preferred; if absent, Baxter warns that syncs run harness-native (S13). n8n self-hosted is the standard stack.",
+      "properties": {
+        "provider": {
+          "enum": ["n8n", "harness-native"],
+          "description": "n8n is the default Workflow Engine provider. harness-native is the fallback for deployments without an engine."
+        },
+        "deployment": {
+          "enum": ["internal", "external"],
+          "description": "internal: n8n co-located on the same VPS as the harness (Docker) — the documented default. external: separate host, for isolation or scale. Ignored when provider is harness-native."
+        },
+        "endpoint": {
+          "type": "string",
+          "minLength": 1,
+          "description": "n8n base URL — e.g. http://localhost:5678 for internal. Required when provider is n8n (S13)."
+        },
+        "secrets": {
+          "type": "string",
+          "pattern": "^vault/[A-Za-z0-9][A-Za-z0-9/_-]*$",
+          "description": "Vault path for the n8n MCP bearer token — NEVER a value (§7.4). Required when provider is n8n (S13)."
+        }
+      }
+    },
     "sync_topology": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["from", "to", "what"],
+        "if": {
+          "properties": { "via": { "const": "native" } }
+        },
+        "then": {
+          "not": { "required": ["workflow"] },
+          "description": "S14: the workflow field is allowed only on via: n8n entries."
+        },
         "properties": {
           "from": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
           "to": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
@@ -216,10 +249,20 @@
             "type": "string",
             "pattern": "^[a-z0-9_]+$",
             "description": "Short machine-friendly description of the sync, e.g. new_contact_syncs_to_tagged_list."
+          },
+          "via": {
+            "enum": ["native", "n8n"],
+            "default": "n8n",
+            "description": "How the sync runs (§5 rule 6): native when a vendor-native integration path exists (it takes precedence); n8n when the Workflow Engine builds it."
+          },
+          "workflow": {
+            "type": "string",
+            "pattern": "^[a-z0-9_:-]+$",
+            "description": "n8n workflow name/ID — recorded by setup Document; allowed only on via: n8n entries (S14)."
           }
         }
       },
-      "description": "Declared, never guessed (§8.5 rule 4). Every from/to must name a connector in `connectors`."
+      "description": "All declared syncs — native and engine alike. Declared, never guessed (§8.5 rule 4). Every from/to must name a connector in `connectors`."
     },
     "approval_gates": {
       "type": "object",
@@ -262,6 +305,10 @@
     "S8: secrets paths are syntactically valid vault references and are validated against the vault early in setup so a missing credential fails at Learn, not mid-Apply (§8.2).",
     "S9: memory.retention.prune_after_days >= memory.retention.summarise_after_days.",
     "S10: no secret values anywhere in the file — vault paths only (§7.4 rule 3).",
-    "S11: backup.mode = private-remote requires backup.remote to be present; backup.remote is forbidden for local-only mode; the remote must never point at a public repository (§7.2 rule 4)."
+    "S11: backup.mode = private-remote requires backup.remote to be present; backup.remote is forbidden for local-only mode; the remote must never point at a public repository (§7.2 rule 4).",
+    "S12: sync_topology.from and sync_topology.to reference connectors present in `connectors`; no self-loops; no duplicate from+to+what pairs (§7.6).",
+    "S13: workflow_engine is optional-with-warning — if absent, Baxter records a warning open item and the deployment proceeds harness-native, UNLESS any sync_topology entry has via: n8n, in which case the config is malformed and halts. If present with provider n8n, endpoint and secrets are required.",
+    "S14: the workflow field is allowed only on via: n8n entries; every via: n8n entry must have a workflow recorded by setup Document before the deployment is done (§8.4).",
+    "S15: native precedence (§5 rule 6) — before declaring a sync via: n8n, Baxter must have checked for a vendor-native path; native wins when one exists. A sync that is neither declared nor explicitly declined is a gap to flag, never silently dropped."
   ]
 }

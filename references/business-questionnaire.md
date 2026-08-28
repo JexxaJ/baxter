@@ -98,17 +98,17 @@ After Stage 3. This is where the gates and syncs are decided.
 | W3 | "When I need to reach you for an approval, what's your preference — immediate message, or a daily summary?" | `business-context.md` → Preferences |
 | W4 | "Your configuration will live on this agent. Should I also back it up to a private git repository you control? If you don't have one, I'll keep it local — but then your agent's own backup must cover it: anyone running a business-critical system is expected to back up their agent's configuration." *(gate-critical — continuity)* | `backup.mode`, `backup.remote` |
 
-### 4b. Sync topology — confirm, never invent
+### 4b. Sync topology — Baxter proposes, owner confirms
 
-Baxter proposes syncs **only** from the selected connectors' declared sync topology (Connector Pack, "Sync Topology" sections), in plain language:
+Baxter proposes syncs **only** from the selected connectors' declared sync topology (Connector Pack, "Sync Topology" sections) — and it resolves **how** each runs before asking: where a vendor-native integration path exists, it proposes `native` (§5 rule 6); only where none exists does it propose building a Workflow Engine flow (`n8n`). The owner confirms in plain language and never needs to know which mechanism runs underneath:
 
 | ID | Ask | Maps to |
 |---|---|---|
-| S1 | "When a new customer is added, should they flow into your email lists automatically?" *(if crm + email-marketing selected)* | `sync_topology: crm → email-marketing` |
-| S2 | "Should invoice/payment status from accounting show up against the job in the CRM?" *(if crm + accounting selected)* | `sync_topology: accounting → crm` |
-| S3 | "Should website enquiries create a contact/job automatically?" *(if website + crm selected)* | `sync_topology: website → crm` |
+| S1 | "When a new customer is added, should they flow into your email lists automatically? I can do this with a background workflow." *(if crm + email-marketing selected)* | `sync_topology: crm → email-marketing, via: n8n` |
+| S2 | "Should invoice/payment status from accounting show up against the job in the CRM? If your tools already do this natively, I'll use their built-in link." *(if crm + accounting selected)* | `sync_topology: accounting → crm, via: native` where the vendors integrate directly; `via: n8n` otherwise |
+| S3 | "Should website enquiries create a contact/job automatically?" *(if website + crm selected)* | `sync_topology: website → crm, via: n8n` |
 
-Each proposed sync is presented as *"When X happens, Y will follow — yes/no?"*. Rejected syncs are simply not declared; undeclared syncs are never configured (§8.5 rule 4).
+Each proposed sync is presented as *"When X happens, Y will follow — yes/no?"*. Rejected syncs are simply not declared; undeclared syncs are never configured (§8.5 rule 4). A capability whose sync the owner declines is recorded as explicitly declined — a visible decision, not a silent gap (S15).
 
 ---
 
