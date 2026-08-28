@@ -23,7 +23,7 @@ What this connector provides to the business.
 
 ## Onboarding Questions (Stage 3)
 
-Asked by Baxter during onboarding (`core/onboarding-protocol.md`) when this connector is selected. Every question maps to a config destination; **credentials are never collected at onboarding** (§7.4) — the vault path is recorded, and setup verifies it.
+Asked by Baxter during onboarding (`references/onboarding-protocol.md`) when this connector is selected. Every question maps to a config destination; **credentials are never collected at onboarding** (§7.4) — the vault path is recorded, and setup verifies it.
 
 | ID | Ask | Maps to |
 |---|---|---|

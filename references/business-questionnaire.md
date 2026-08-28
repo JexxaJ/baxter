@@ -96,6 +96,7 @@ After Stage 3. This is where the gates and syncs are decided.
 | W1 | "Some actions are public or permanent — publishing a social post, sending an email campaign, anything customer-visible. Who signs off on those? (Usually: you.)" | `approval_gates.default` |
 | W2 | "If you're away and something is waiting on approval, should I chase you, or hold it until you're back? I will never approve things myself." | Open item → approval-timeout behaviour (deferred §9) |
 | W3 | "When I need to reach you for an approval, what's your preference — immediate message, or a daily summary?" | `business-context.md` → Preferences |
+| W4 | "Your configuration will live on this agent. Should I also back it up to a private git repository you control? If you don't have one, I'll keep it local — but then your agent's own backup must cover it: anyone running a business-critical system is expected to back up their agent's configuration." *(gate-critical — continuity)* | `backup.mode`, `backup.remote` |
 
 ### 4b. Sync topology — confirm, never invent
 

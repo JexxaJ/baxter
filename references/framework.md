@@ -35,7 +35,7 @@
 
 ## 3. Architecture Diagram
 
-The **Messaging Channel is highlighted** — the single, clearly defined human-facing gateway for the business owner and employees. The **Config Repository** holds Baxter's instruction set and every per-deployment setting (§7.2, §8.1).
+The **Messaging Channel is highlighted** — the single, clearly defined human-facing gateway for the business owner and employees. The **Config Workspace** (agent-local git, §7.2) holds every per-deployment setting (§7.2, §8.1); the skill bundles the fixed instruction set (§8.1).
 
 ```text
 Business Owner ──┐
@@ -51,10 +51,10 @@ Employees ───────┘             conversation · alerts · approva
          reads / │ writes         │  delegates predefined tasks  │  instruction set +
                  │                │  events and results back     │  deployment config
                  ▼                ▼                              ▼
-      [ Data Storage ]    [ Workflow Engine ]          [ Config Repository ]
+      [ Data Storage ]    [ Workflow Engine ]          [ Config Workspace ]
       files · artifacts   deterministic automation     versioned (git) —
-                                                       constitution · packs ·
-                                                       deployment config
+                                                        per-business deployment
+                                                        config (§7.2)
               │                │
               │                │  events in / calls out
               ▼                ▼
@@ -75,8 +75,8 @@ Employees ───────┘             conversation · alerts · approva
 - Humans interact **only** through the Messaging Channel; connectors and external systems interact **only** through the API / Event Gateway. Nothing bypasses the core.
 - All connector traffic flows through the gateway — events in, calls out. Deterministic handling goes to the Workflow Engine; judgment goes to Baxter.
 - Machine connections use **MCP** wherever the vendor exposes an MCP server, and documented REST APIs otherwise — the choice is made once per connector, never per deployment.
-- Baxter's instruction set and every per-business setting live in the Config Repository (versioned, git) and are applied to the deployment, never typed into it (§7.2, §8).
-- Secrets, memory, and configuration are core services: the Secrets Service guards vault access (§7.4), the Memory Service owns long-term memory (§7.5), the Config Repository feeds the instruction set (§8.1).
+- Baxter's instruction set comes bundled in the skill (§8.1); every per-business setting lives in the Config Workspace (versioned, git, §7.2) and is applied to the deployment, never typed into it (§7.2, §8).
+- Secrets, memory, and configuration are core services: the Secrets Service guards vault access (§7.4), the Memory Service owns long-term memory (§7.5), the skill feeds the instruction set (§8.1), and the Config Workspace holds every per-business setting (§7.2).
 - Connectors never talk to each other directly and never hide data — customer records live in the CRM connector; working files and artifacts live in core Data Storage.
 
 ---
@@ -178,14 +178,14 @@ Connectors are business capabilities layered onto the core. Illustrative set:
 
 A new business deployment is assembly, not engineering:
 
-1. Deploy the core unchanged (Baxter, Workflow Engine, Data Storage, Gateways).
-2. **Onboard** — Baxter runs the Onboarding Protocol (§8.6) with the business owner: a structured questionnaire that produces the Deployment Config.
+1. **Install** — deploy the agent harness (Baxter, Workflow Engine, Data Storage, Gateways are what the core provides), install the Baxter skill unchanged (§8.1), and open one Messaging Channel.
+2. **Onboard** — Baxter runs the Onboarding Protocol (§8.6) with the business owner: a structured questionnaire that produces the Deployment Config in the config workspace (§7.2).
 3. Select and connect the connectors that business needs.
 4. Configure the predefined workflows in the Workflow Engine, Baxter's persona and business context, and the Messaging Channel endpoints.
 5. Define the approval gates appropriate to that business.
 6. Run the setup protocol — Baxter learns the chosen connectors and drives their configuration and syncs through the human approval gates (§8).
 
-> **Operational defaults:** all per-business configuration is tracked as code in a versioned repository (§7.2), backup/recovery is enabled from day one (§7.1), and setup is agent-driven (§8).
+> **Operational defaults:** all per-business configuration is tracked as code in the agent-local config workspace, backed up per the owner's choice (§7.2), backup/recovery is enabled from day one (§7.1), and setup is agent-driven (§8).
 
 ---
 
@@ -226,11 +226,11 @@ Every per-business difference — Baxter's persona and business context, workflo
 
 **Rules:**
 
-1. **The repository is the source of truth for configuration.** No edits directly on the running system; changes flow repository → deploy.
+1. **The repository is the source of truth for configuration.** No edits directly on the running system; changes flow repository → deploy. The repository is the **config workspace** — an agent-local git repository created by Baxter at bootstrap (§8.2); it is a real git repository even when it never leaves the agent.
 2. **Every change is versioned and reversible.** "What changed before the approval gate broke?" is answered by the git history.
-3. **Deployments are reproducible.** A new deployment (§6) is: clone repository → set per-business values → apply. Assembly, not engineering.
-4. **Backup and restore are one system.** Config comes back from the repository; data comes back from the backup store.
-5. **Versioned and pinned.** The core is released under semantic version tags; every deployment pins the core version and each Connector Pack version (§8.2). What is running, and in which version, is exactly knowable for every deployment — updates are explicit, never silent.
+3. **Deployments are reproducible.** A new deployment (§6) is: install the skill → Baxter creates the workspace → onboard → apply. Assembly, not engineering.
+4. **Backup and restore are one system.** Config comes back from the repository; data comes back from the backup store. The workspace is backed up to a **private git remote when the owner provides one**; if the owner declines, the config stays local-only and Baxter warns explicitly that agent-level backup must cover it — a business-critical system is expected to have its agent's configuration backed up (§8.2). Business configuration is never pushed to a public repository.
+5. **Versioned and pinned.** The core is released under semantic version tags; every deployment pins the core version (the installed skill version) and each Connector Pack version (§8.2). What is running, and in which version, is exactly knowable for every deployment — updates are explicit, never silent, and flow only through a deliberate skill update.
 
 ### 7.3 Baxter — Memory Management
 
@@ -287,7 +287,7 @@ The core **requires** long-term memory — Baxter cannot operate without it (§7
 
 - All long-term memory flows through a core-owned **Memory Service** — remember / recall / forget / summarise, exposed via MCP and REST.
 - The agent harness is a stateless brain pointing at the service. Harness-built-in memory counts as volatile working memory only, never as the store of record — this keeps memory portable when the harness is swapped (§4.1 "roles, not profiles").
-- Connector Packs are *static* knowledge (versioned in the config repository, §7.2); the Memory Service holds *dynamic* knowledge only. The two never overlap.
+- Connector Packs are *static* knowledge (bundled in the skill, §8.1); the Memory Service holds *dynamic* knowledge only. The two never overlap.
 
 ```text
 [Baxter / specialists — any harness]
@@ -328,7 +328,7 @@ The core **requires** long-term memory — Baxter cannot operate without it (§7
 
 ## 8. System Setup & Self-Configuration
 
-The core is deployed empty and unconfigured. **Baxter bootstraps the deployment**: it reads the instruction set, learns the chosen connectors, and drives their configuration — with the human at the approval gates. The instruction set is a core artifact; the setup protocol is core behaviour.
+A deployment starts unconfigured. **Baxter bootstraps it**: loaded from the skill, it reads the instruction set, creates the config workspace, learns the chosen connectors, and drives their configuration — with the human at the approval gates. The instruction set is a core artifact; the setup protocol is core behaviour.
 
 ### 8.1 The Instruction Set — Layered
 
@@ -336,30 +336,31 @@ Baxter's instructions are not one prompt; they are three layers, all versioned a
 
 | Layer | Contents | Where it lives |
 |---|---|---|
-| **Core Constitution** (immutable) | Who Baxter is — a coordinator, not an executor; the layering rule (deterministic → Workflow Engine, judgment → Baxter, irreversible → human gate); memory rules (§7.3); the no-parallel-copy rule; the connector contract (MCP-first machine connections); and the setup protocol itself | Core repository — identical in every deployment |
-| **Deployment Config** | Persona details, business context, the chosen connector list, approval-gate rules, Messaging Channel endpoints | Per-deployment repository (§7.2) |
-| **Connector Packs** | One per connector: capabilities, MCP/API surface, configuration checklist, and the expected sync topology between connectors | Repository, per connector |
+| **Core Constitution** (immutable) | Who Baxter is — a coordinator, not an executor; the layering rule (deterministic → Workflow Engine, judgment → Baxter, irreversible → human gate); memory rules (§7.3); the no-parallel-copy rule; the connector contract (MCP-first machine connections); and the setup protocol itself | Bundled in the Baxter skill — identical in every deployment, updated only via explicit skill updates (§7.2 rule 5) |
+| **Deployment Config** | Persona details, business context, the chosen connector list, approval-gate rules, Messaging Channel endpoints | Per-deployment, in the agent-local config workspace (§7.2) |
+| **Connector Packs** | One per connector: capabilities, MCP/API surface, configuration checklist, and the expected sync topology between connectors | Bundled in the Baxter skill, per connector |
+
+**Packaging — the skill.** The core (Constitution, protocols, questionnaire, schema, Connector Packs) is distributed as an installable **skill** (`JexxaJ/baxter`), so any skills-compatible agent harness becomes Baxter with one install. The skill is the *only* copy of the core — no parallel distribution exists. The harness-installed skill files are read-only from Baxter's perspective; per-business configuration never lives inside the skill.
 
 - The **Constitution** dictates *how Baxter behaves*; the **Connector Packs** tell it *what it is configuring*.
 - Any deployment difference belongs in the Deployment Config — never in the Constitution. The instruction set follows the core/connector split: it never changes per business, the config does.
 
 ### 8.2 The Deployment Config — Shape and Schema
 
-The Deployment Config is one file per business, inside the per-deployment repository (§7.2):
+The Deployment Config lives in the **config workspace** — an agent-local git repository created by Baxter at bootstrap, one directory per business (§7.2):
 
 ```text
-config-repo/
-├── core/                        # the Core Constitution — identical in every deployment
-│   └── constitution.md
-├── connectors/                  # Connector Packs — one per product, shared across deployments
-│   ├── crm.md
-│   ├── email-marketing.md
-│   └── accounting.md
+baxter-workspace/                # agent-local git repository — the config workspace
 └── deployments/
     └── <business>/
         ├── deployment.yaml      # ← the Deployment Config — what Enumerate reads
-        └── business-context.md  # persona, facts, tone of voice — loaded into long-term memory
+        ├── business-context.md  # persona, facts, tone of voice — loaded into long-term memory
+        ├── connector-proficiency/
+        │   └── <connector>.md   # what Baxter learned about each locked product
+        └── onboarding-draft.md  # during onboarding only — deleted at handoff
 ```
+
+The core and Connector Packs are **not** in the workspace — they are bundled in the skill (§8.1). The workspace holds only per-business configuration. Its backup is an onboarding decision: a private git remote if the owner provides one; otherwise local-only, with the owner explicitly warned that agent-level backup must cover it (§7.1).
 
 `deployment.yaml` declares *what is in scope* — nothing is inferred:
 
@@ -430,7 +431,7 @@ approval_gates:                           # each gate maps to a named approver f
 
 **How Enumerate uses it:** the connector list drives step 2 (which Connector Packs to load, which MCP servers to enumerate); `roles.active` decides which specialists get created and with which scopes; `sync_topology` becomes the checklist for step 6 verification; `secrets` paths are validated against the vault early so a missing credential fails at step 2, not mid-setup; `approvers` and `approval_gates` are cross-checked so no gate references an unenrolled human.
 
-**Schema.** The structure of `deployment.yaml` is formal, defined by **`core/deployment.schema.json`**. A config that fails schema structure or the semantic rules listed in the schema (`x-semantics` S1–S10) is malformed and halts setup — the config is the contract, and a malformed contract halts rather than improvises.
+**Schema.** The structure of `deployment.yaml` is formal, defined by **`references/deployment.schema.json`**. A config that fails schema structure or the semantic rules listed in the schema (`x-semantics` S1–S10) is malformed and halts setup — the config is the contract, and a malformed contract halts rather than improvises.
 
 **Failure behaviour:** a missing connector entry, an undeclared sync, or a second `system_of_record: true` stops the protocol — Baxter asks, it never guesses. The config is the contract; a malformed contract halts setup.
 
@@ -467,7 +468,7 @@ flowchart LR
 6. **Verify** — smoke-test every connection: pull a test record, push a test record, confirm each declared sync actually fires.
 7. **Document** — write the resulting configuration back to the repository. Setup state becomes versioned, auditable, and re-appliable.
 
-> The full agent-facing procedure — inputs, credential provisioning, per-step outputs, and failure behaviour — lives in `core/setup-protocol.md` (identical in every deployment, §8.1). Setup consumes the Deployment Config and Connector Proficiency profiles produced by onboarding (§8.6); per-connector work is driven by each pack's Configuration Checklist (Apply) and Verification section (smoke tests).
+> The full agent-facing procedure — inputs, credential provisioning, per-step outputs, and failure behaviour — lives in `references/setup-protocol.md` (identical in every deployment, §8.1). Setup consumes the Deployment Config and Connector Proficiency profiles produced by onboarding (§8.6); per-connector work is driven by each pack's Configuration Checklist (Apply) and Verification section (smoke tests).
 
 ### 8.5 Guardrails — Ensuring Baxter Behaves This Way
 
@@ -494,13 +495,13 @@ flowchart LR
     G -->|"rejected / unclear"| D
 ```
 
-**Bootstrap assumption:** onboarding presumes a minimal stack — the core deployed empty, one Messaging Channel endpoint live (a simple Telegram bot or even a CLI session suffices), the Config Repository writable, and the vault reachable for path validation. Everything else is produced by onboarding, not assumed by it.
+**Bootstrap assumption:** Baxter arrives via an installed skill (§8.1) on an agent harness with one Messaging Channel endpoint live (a simple Telegram bot or even a CLI session suffices) and a writable working directory — Baxter creates the config workspace itself (§8.2). The vault must be reachable for path validation during setup; credentials are added by humans, never collected by Baxter. Everything else is produced by onboarding, not assumed by it.
 
 **Sources of questions — never improvised:**
 
-1. **The core questionnaire** (`core/business-questionnaire.md`) — source request + business profile (with confirmation of extracted findings), capability menu, working rules. Identical in every deployment.
+1. **The core questionnaire** (`references/business-questionnaire.md`) — source request + business profile (with confirmation of extracted findings), capability menu, working rules. Identical in every deployment.
 2. **Connector Pack "Onboarding Questions"** — asked per selected connector; skip-logic means only selected connectors' questions are asked. Once a connector is locked, the pack's **Proficiency** section defines what Baxter must learn; the product's own MCP self-description (§8.3) is the live source of truth.
-3. **The schema** (`core/deployment.schema.json`) — every answer must land in a schema field; a question with no destination is out of scope.
+3. **The schema** (`references/deployment.schema.json`) — every answer must land in a schema field; a question with no destination is out of scope.
 
 **Rules:**
 
@@ -514,7 +515,7 @@ flowchart LR
 
 **Failure behaviour:** rejection returns to the relevant stage with corrections recorded; a constraint that cannot be satisfied by asking stops the protocol; anything outside onboarding's reach (vendor accounts, DNS, hosting) is an open item for the owner or operator — never an agent action.
 
-The full agent-facing procedure lives in `core/onboarding-protocol.md` (identical in every deployment, §8.1).
+The full agent-facing procedure lives in `references/onboarding-protocol.md` (identical in every deployment, §8.1).
 
 ---
 

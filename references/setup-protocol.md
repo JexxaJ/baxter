@@ -1,6 +1,6 @@
 # Core Setup Protocol
 
-*Status: core artifact. Authoritative in `docs/architecture-framework.md` §8.4; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). It consumes the Deployment Config produced by the Onboarding Protocol (`onboarding-protocol.md`) and performs the **doing**: credentials, connections, workflows, verification.*
+*Status: core artifact. Authoritative in `references/framework.md` §8.4; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). It consumes the Deployment Config produced by the Onboarding Protocol (`onboarding-protocol.md`) and performs the **doing**: credentials, connections, workflows, verification.*
 
 ## 1. Purpose and Division of Labour
 
@@ -18,11 +18,13 @@ Setup is agent-driven but **human-gated**: nothing irreversible happens before t
 
 | Input | Source | Used by |
 |---|---|---|
-| Deployment Config | `deployments/<business>/deployment.yaml` (committed at onboarding Stage 6) | Enumerate |
-| Business context | `deployments/<business>/business-context.md` → loaded into long-term memory | throughout |
-| Connector Proficiency profiles | `deployments/<business>/connector-proficiency/` | Learn (reconciled against live self-description) |
-| Connector Packs | `connectors/*.md` — Configuration Checklists (Apply steps) and Verification sections (smoke tests) | Apply, Verify |
+| Deployment Config | `<workspace>/deployments/<business>/deployment.yaml` (committed at onboarding Stage 6) | Enumerate |
+| Business context | `<workspace>/deployments/<business>/business-context.md` → loaded into long-term memory | throughout |
+| Connector Proficiency profiles | `<workspace>/deployments/<business>/connector-proficiency/` | Learn (reconciled against live self-description) |
+| Connector Packs | skill `connectors/*.md` — Configuration Checklists (Apply steps) and Verification sections (smoke tests) | Apply, Verify |
 | Secrets Service + vault | reachable; values added by humans | Apply (never onboarding) |
+
+The workspace is the agent-local config repository created at bootstrap (§7.2); all setup writes — including the step-7 setup record — are committed there, and pushed to the private backup remote when `backup.mode: private-remote`.
 
 **Unresolved open items block entry.** Any capability deferred during onboarding without an explicit owner decision, or any connector without a proficiency profile, halts at Enumerate — Baxter asks, it never guesses.
 
@@ -43,7 +45,7 @@ The one thing setup cannot do alone: **humans put credentials into the vault** (
 | 2. Learn | Loads each Connector Pack; enumerates each connector's live MCP/REST surface (§8.3); reconciles against the Proficiency profile — gaps update the profile | — | Confirmed capability map per connector |
 | 3. Plan | Produces a written plan: per-connector configuration steps (from pack checklists), workflow definitions, sync-topology jobs, memory namespaces, channel enrollment | — | Written plan |
 | 4. Approve | Presents the plan at the approval gate — the owner sees exactly what will be configured, in plain language | **Approves or rejects** | Approved plan |
-| 5. Apply | Executes: credential provisioning (§2a) → connections → workflow definitions → sync jobs → memory namespaces. Deterministic steps → Workflow Engine; judgment → Baxter | Owner adds credentials to the vault when prompted | Configured, connected system |
+| 5. Apply | Executes: credential provisioning (§2a) → connections → workflow definitions → sync jobs → memory namespaces → backup remote (if `backup.mode: private-remote`, add the remote and push the workspace). Deterministic steps → Workflow Engine; judgment → Baxter | Owner adds credentials to the vault when prompted | Configured, connected system |
 | 6. Verify | Runs every connector's Verification smoke tests; confirms each declared sync actually fires | — | Verified evidence, or failure → stop and fix |
 | 7. Document | Writes the resulting state back to the repository — applied config, workflow definitions, updated proficiency notes | — | Versioned, re-appliable record |
 
@@ -63,7 +65,7 @@ The one thing setup cannot do alone: **humans put credentials into the vault** (
 | Artifact | Where |
 |---|---|
 | Applied configuration (connections, workflows, channels, memory namespaces) | The running system |
-| Updated Connector Proficiency profiles (live-learned surfaces reconciled) | `deployments/<business>/connector-proficiency/` |
+| Updated Connector Proficiency profiles (live-learned surfaces reconciled) | `<workspace>/deployments/<business>/connector-proficiency/` |
 | Setup record | Committed to the repository (§8.5 rule 2) — auditable, re-appliable |
 
 ## 5. Failure Behaviour

@@ -1,6 +1,6 @@
 # Core Constitution
 
-*Status: draft skeleton. The authoritative rules live in `docs/architecture-framework.md`; this file is completed before first deployment and is then **identical in every deployment** (§8.1). The Deployment Config — never this file — carries per-business differences.*
+*Status: draft skeleton. The authoritative rules live in `references/framework.md`; this file is completed before first deployment and is then **identical in every deployment** (§8.1). The Deployment Config — never this file — carries per-business differences.*
 
 ## 1. Identity
 

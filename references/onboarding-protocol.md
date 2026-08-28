@@ -1,6 +1,6 @@
 # Core Onboarding Protocol
 
-*Status: core artifact. Authoritative in `docs/architecture-framework.md` §8.6; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). Onboarding runs **before** the Setup Protocol (§8.4) and produces the Deployment Config (§8.2) that setup consumes.*
+*Status: core artifact. Authoritative in `references/framework.md` §8.6; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). Onboarding runs **before** the Setup Protocol (§8.4) and produces the Deployment Config (§8.2) that setup consumes.*
 
 ## 1. Purpose
 
@@ -39,8 +39,8 @@ Handoff  Setup Protocol §8.4  Enumerate reads the generated config
 | 1. Business profile | Asks for a source (website, brochure, document); extracts what it can; **confirms** findings with the owner — direct questions only for gaps (`business-questionnaire.md` §1) | Supplies the source; confirms or corrects each finding | Confirmed business-context content |
 | 2. Capabilities | Presents the plain-language capability menu (`business-questionnaire.md` §2); maps choices to connectors and activates roles (§4.1) | Selects what the business needs | Connector list, active roles |
 | 3. Connector lock-in & learning | For each selected capability: confirms the specific product; if the owner is unsure, **defers** the choice as an open item; once locked, learns the product — researches its MCP server / REST API, enumerates what it can do, and writes a Connector Proficiency profile. **No credentials requested** | Names the tools it uses or wants; defers freely when undecided; confirms Baxter's understanding of each tool | Locked connector list + Connector Proficiency profiles |
-| 4. Working rules | Asks the working-rules questionnaire (`business-questionnaire.md` §3): who approves what, which syncs make sense | Decides the gates; confirms or rejects each proposed sync | `approval_gates`, `sync_topology`, preferences |
-| 5. Draft & review | Writes `deployment.yaml` (validated against `core/deployment.schema.json` and the semantic rules, §6) + `business-context.md` (from `core/business-context.template.md`, confirmed findings only); presents a human-readable summary **and** the full config | Reads the summary, reviews the config | Validated draft config |
+| 4. Working rules | Asks the working-rules questionnaire (`business-questionnaire.md` §3): who approves what, which syncs make sense, where the workspace is backed up | Decides the gates; confirms or rejects each proposed sync; chooses the backup mode | `approval_gates`, `sync_topology`, `backup`, preferences |
+| 5. Draft & review | Writes `deployment.yaml` (validated against `references/deployment.schema.json` and the semantic rules, §6) + `business-context.md` (from `references/business-context.template.md`, confirmed findings only); presents a human-readable summary **and** the full config | Reads the summary, reviews the config | Validated draft config |
 | 6. Approve & commit | Presents the approval gate; on approval, commits the config to the repository (versioned, §7.2); records open items | Approves or sends it back | Committed Deployment Config |
 | Handoff | Starts the Setup Protocol (§8.4) — Enumerate reads the generated config | — | Setup begins |
 
@@ -48,9 +48,9 @@ Handoff  Setup Protocol §8.4  Enumerate reads the generated config
 
 Baxter never improvises questions. Every question comes from a versioned source:
 
-1. **Core questionnaire** (`core/business-questionnaire.md`) — Stages 0, 1, 2, 4. Business-agnostic; identical in every deployment.
+1. **Core questionnaire** (`references/business-questionnaire.md`) — Stages 0, 1, 2, 4. Business-agnostic; identical in every deployment.
 2. **Connector Pack "Onboarding Questions"** — Stage 3, per connector. Each pack carries its own questions (what tools the business uses, what identifiers it works with). Once a connector is locked, the pack's **Proficiency** section defines what Baxter must learn about the product; the product's own MCP self-description (§8.3) is the live source of truth.
-3. **The schema** (`core/deployment.schema.json`) — not a question source, but the *destination map*: every answer must land in a schema field. If a question has no destination, it is out of scope for onboarding.
+3. **The schema** (`references/deployment.schema.json`) — not a question source, but the *destination map*: every answer must land in a schema field. If a question has no destination, it is out of scope for onboarding.
 
 The owner never sees technical vocabulary: connection standards (`mcp`/`rest`), memory stores, and pack versions are decided from the Connector Packs and defaults, not asked of the owner (§5 rule 5 — chosen once per connector).
 
@@ -70,7 +70,7 @@ The owner never sees technical vocabulary: connection standards (`mcp`/`rest`), 
 
 Stage 5 ends with Baxter validating its own draft. **A draft that fails any check does not reach the approval gate** — Baxter fixes it by asking, never by guessing:
 
-- Schema conformance: the draft validates against `core/deployment.schema.json` (structure).
+- Schema conformance: the draft validates against `references/deployment.schema.json` (structure).
 - Semantic rules S1–S10 from the schema (`x-semantics`): unique connectors, exactly one `system_of_record`, scopes reference declared connectors, role activation matches capability choices, sync topology references declared connectors, gates map to enrolled approvers, retention ordering, no secret values.
 - Vault check: every `secrets` path is confirmed to exist in the vault (values are never read at this stage — existence only), so a missing credential fails here, not mid-setup (§8.2).
 
@@ -79,9 +79,11 @@ Stage 5 ends with Baxter validating its own draft. **A draft that fails any chec
 | File | Content | Committed at |
 |---|---|---|
 | `deployments/<business>/deployment.yaml` | The validated Deployment Config | Stage 6, after owner approval |
-| `deployments/<business>/business-context.md` | Business profile, persona, people, preferences — completed from `core/business-context.template.md` | Stage 6, after owner approval |
+| `deployments/<business>/business-context.md` | Business profile, persona, people, preferences — completed from `references/business-context.template.md` | Stage 6, after owner approval |
 | `deployments/<business>/connector-proficiency/<connector>.md` | One per locked connector: what the product does, its MCP/REST surface, capabilities and limitations relevant to this deployment | Stage 6, after owner approval |
 | `deployments/<business>/onboarding-draft.md` | Progress + open items (deleted at handoff; open items are re-presented during §8.4 Learn) | Throughout (not part of the config) |
+
+All outputs are written inside the **config workspace** — the agent-local git repository Baxter created at bootstrap (§7.2) — and committed at Stage 6. If the owner chose a private backup remote (questionnaire W4), setup configures the push; if the owner declined, Baxter has already warned that agent-level backup must cover the workspace.
 
 A deployment whose connectors are not all locked cannot be approved: deferred connector choices appear as open items, and the approval gate waits until every open item is either resolved or the owner explicitly accepts a deployment without that capability.
 
