@@ -5,7 +5,7 @@
 
 ## Version
 
-1.0.0
+1.1.0
 
 ## Purpose
 
@@ -15,11 +15,18 @@ What this connector provides to the business.
 
 - …
 
+## Kind and Surfaces
+
+- Kind: `business` | `automation` | `broker` (§5)
+- Agent surface: `mcp` | `openapi` | `rest` | `none` — how Baxter converses with it
+- Flow surface: `rest` | `webhook` | `native` | `none` — how a flow calls it
+- Both surfaces are chosen once per connector and pinned in `deployment.yaml`.
+
 ## Connection
 
-- Standard: `mcp` | `rest` (chosen once per connector — §5 rule 5)
 - Endpoint / MCP server: …
-- Auth: … (values come from the Secrets Service — never stored here)
+- Auth: values come from the declared secret source — never stored here
+- Scopes: least privilege, listed in the connector's `secrets.scope`
 
 ## Onboarding Questions (Stage 3)
 

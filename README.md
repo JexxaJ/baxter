@@ -1,6 +1,8 @@
 # Baxter — Business AI Assistant
 
-A repeatable business system: a **fixed, reusable core** plus **swappable connector packs**, distributed as an installable agent skill. Install the skill on any skills-compatible agent and the agent *becomes* Baxter — it onboards a business by questionnaire, learns its tools, configures the connectors, and runs the deployment. The core is identical in every deployment; only the per-business configuration differs, and that lives in a git-versioned workspace the agent owns. The standard stack is **agent harness + n8n co-located on one VPS** — n8n is the default Workflow Engine for the deterministic flows, with vendor-native integrations taking precedence wherever they exist (§7.6).
+A portable business system: a **fixed blueprint** plus **swappable hosts, services and automation**. Install the skill on a skills-compatible agent — or paste the brief on a host that has no skill loader — and the agent *becomes* Baxter: it onboards a business, learns its tools, configures the connections, and operates the deployment. Per-business configuration lives in a git workspace the agent owns.
+
+Baxter talks to every enrolled service directly (MCP first), and builds durable **flows** between them through an optional automation provider such as n8n or Zapier. Once a flow runs, the services talk to each other; Baxter checks results through the run ledger.
 
 ## Install and run
 
@@ -8,36 +10,52 @@ A repeatable business system: a **fixed, reusable core** plus **swappable connec
 npx skills add JexxaJ/baxter
 ```
 
-Then tell your agent: **"Become Baxter."** That's the whole setup.
+Then tell your agent: **"Become Baxter."** It will ask what you want to call it — that name becomes the deployment identity.
 
-1. **Install the skill** on your agent harness (Hermes Cloud, VPS, local — same either way). Configure provider + model settings and one messaging channel (e.g., a Telegram bot) as usual.
-2. **Say "become Baxter"** (or "run Baxter bootstrap", or describe onboarding a business). Baxter detects there is no config workspace, creates one (`git init`), and starts **onboarding** on the current channel: business profile (scraped from your website and confirmed with you), capability selection, connector lock-in and learning, working rules — ending in a committed, schema-validated config (§8.6).
-3. **Choose your backup**: Baxter offers to push the workspace to a private git repository you control; if you decline, keep your agent-level backups current — the config is your deployment (§7.2).
-4. **Store secrets in your password vault** when setup asks — never in chat, never in any repository (§7.4). Onboarding and setup reference vault paths only.
-5. **Setup** follows automatically: connections, workflows, verification, documentation (§8.4). Every irreversible step sits behind an approval gate addressed to you.
+1. **Choose a host.** Read `docs/<harness>-requirements.md` first — it says which ports the platform supplies and how the blueprint is delivered (skill, brief or operator runbook).
+2. **Install the blueprint** as a skill where supported, or paste `references/brief.md` into the agent's instructions.
+3. **Say "become Baxter."** Baxter creates the workspace, runs onboarding, and commits a validated config.
+4. **Choose your backup** and your secret source (external vault, host-native store, or hybrid). Values never enter chat or the repository.
+5. **Run setup:** connections, optional automation provider, flows, verification, documentation.
 
-A worked Hermes walkthrough is in `docs/harness-notes.md`.
+## How work happens
+
+| Mode | What it is | Example |
+|---|---|---|
+| **Conversation** | Baxter uses a service's tools | "Which jobs are late?", "Draft a reply" |
+| **Flow** | A durable route between services, built by a provider | New enquiry → CRM record → tagged email list |
+| **Gate** | A human approval before anything public, financial or destructive | Publish a post, send a campaign, refund |
+
+A deployment may have **zero** automation providers and zero flows; providers are added when a flow needs one, not before.
 
 ## Repository layout
 
-This repository **is** the skill (`npx skills add JexxaJ/baxter`):
-
 | Path | What it holds |
 |---|---|
-| `SKILL.md` | The bootstrap entry point — identity, state machine, workspace rules, guardrails (§8.1) |
-| `references/constitution.md` | The Core Constitution — Baxter's instruction set, identical in every deployment (§8.1) |
-| `references/onboarding-protocol.md` | The Onboarding Protocol — how Baxter gathers a business's needs from its owner (§8.6) |
-| `references/business-questionnaire.md` | The core questionnaire — Stages 0, 1, 2, 4 of onboarding (§8.6) |
-| `references/business-context.template.md` | The template Baxter completes for `business-context.md` |
-| `references/deployment.schema.json` | Formal schema for `deployment.yaml` — structure + semantic rules S1–S11 (§8.2) |
-| `references/setup-protocol.md` | The Setup Protocol — how Baxter connects and configures what onboarding defined (§8.4) |
+| `SKILL.md` | Bootstrap entry point — identity, state machine, workspace rules, guardrails |
+| `references/brief.md` | Portable short form of the constitution, for hosts without a skill loader |
+| `references/constitution.md` | The immutable behaviour of Baxter |
 | `references/framework.md` | The architecture framework (authoritative) |
-| `connectors/` | Connector Packs — what Baxter knows about each product: capabilities, onboarding questions, proficiency checklist, configuration, sync topology (§8.1) |
-| `docs/harness-notes.md` | Operator notes — the Hermes walkthrough |
+| `references/onboarding-protocol.md` | How Baxter gathers a business's needs |
+| `references/business-questionnaire.md` | The core questionnaire (Stages 0–4) |
+| `references/business-context.template.md` | The template for `business-context.md` |
+| `references/deployment.schema.json` | Schema v2 + semantic rules S1–S19 |
+| `references/setup-protocol.md` | How Baxter connects, builds flows and documents |
+| `connectors/` | Connector Packs — business services, the automation-provider contract, n8n and Zapier |
+| `docs/harness-requirements-template.md` | How a platform is assessed |
+| `docs/<harness>-requirements.md` | Per-platform assessment and runbook (Hermes, Rakazo, Grok Bot, Nod) |
+| `docs/harness-notes.md` | Platform index and assessment rules |
+| `VERSION` | Blueprint release (semver); deployments pin it as `core_version` |
+
+## Versioning
+
+`VERSION` is the source of truth — currently **0.2.1**, which adds the owner-chosen assistant identity to the 0.2 line (schema v2, host adapters, the automation-provider contract and native secret sources). Released versions are tagged; every deployment pins `core_version`, each pack pins `pack_version`, and each host pins `adapter_version`. Updates are explicit (`npx skills update`), never silent.
 
 ## Operating rules
 
-- No secrets, credentials, or `.env` values in this repository or any config — vault paths only (§7.4).
-- Per-business configuration lives in the agent's git-versioned **config workspace**; changes flow repository → deploy, never the reverse (§7.2).
-- The core never changes per business — connectors are chosen per business.
-- Core updates are explicit skill updates (semantic version tags); every deployment pins its `core_version` (§7.2 rule 5).
+- No secrets, credentials or `.env` values in this repository or any config — references only.
+- Per-business configuration lives in the agent's git **workspace**; changes flow repository → deploy, never the reverse.
+- The blueprint never changes per business — hosts, services, providers and the assistant's name do.
+- **Baxter is the blueprint codename.** The deployment's assistant name is chosen by the owner at onboarding and is the only identity used at runtime.
+- One system of record for customer data; flows never generate content; judgment stays with Baxter.
+- Every gated action is approved by a verified human, and the kill switch reaches flows.

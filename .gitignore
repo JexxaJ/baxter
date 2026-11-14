@@ -12,3 +12,6 @@ secrets/
 backups/
 *.tar.gz
 *.zip
+
+# generated diagram artifacts
+.archify/

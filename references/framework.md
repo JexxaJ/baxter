@@ -1,177 +1,184 @@
-# Bradshaw Knox Business AI Assistant — Architecture Framework
+# Business AI Assistant — Architecture Framework
 
-*System: Bradshaw Knox Business AI Assistant | Agent: "Baxter" | Status: Foundational architecture*
+*System: Baxter | Blueprint v0.2.1 | Status: foundational architecture*
 
-**Objective.** A repeatable business system assembled from a **fixed, reusable core** plus **swappable connector modules**. The core is identical in every deployment; connectors adapt the system to each business.
+**Objective.** A repeatable business system assembled from a **fixed, portable blueprint** plus **swappable services and hosts**. The blueprint is identical in every deployment; the agent platform, the services, and the automation provider are chosen per deployment.
 
-> **Scope.** Generic architecture only. Vendor selection, hosting, pricing, and business-specific workflow definitions and configuration are handled separately.
+> **Scope.** Generic architecture only. Vendor selection, hosting, pricing, and business-specific configuration are handled separately.
 
 ---
 
 ## 1. The Core Concept
 
-- The **core** provides everything that is the same in any business: an intelligence that coordinates (Baxter), an automation layer that executes, durable data storage the core owns, and gateways through which people and machines interact with the system.
-- **Connector modules** supply business capabilities (Website, CRM, Email Marketing, Social, Accounting, …). They are optional, interchangeable, and interact with the system **only through the core**.
-- Rule of thumb: **the core never changes per business — connectors are chosen per business.**
+- The **blueprint** provides what is the same in every business: the behaviour (Baxter), the protocols, the config schema, the invariants, and the contract every service must satisfy.
+- The **host** provides the runtime: an agent, a channel, a tool plane, memory, files and possibly a scheduler. Hosts differ; the deployment declares which ports each one supplies (§9).
+- **Services** supply business capability (Website, CRM, Email Marketing, Social, Accounting, …). They are optional, interchangeable, and are reached two ways: by Baxter in conversation, and by flows that call them directly.
+- **Automation providers** (n8n, Zapier, Make, host-native routines) are optional services that build and run flows. They are not part of the core and may be added at any time.
+- The **assistant's name and persona** are deployment settings chosen by the owner at first contact; **Baxter** is the blueprint's codename and the Coordinator role in documentation.
+- Rule of thumb: **the blueprint never changes per business — services, providers, hosts and identity do.**
 
 ---
 
-## 2. Core Components
+## 2. Parts of the System
 
-| Core Component | Role | Constraint |
+| Part | Role | Notes |
 |---|---|---|
-| **Baxter — AI Agent** | **Coordination:** interprets requests, makes decisions, orchestrates workflows and connectors | The only source of judgment in the system |
-| **Workflow Engine** | **Automation:** executes predefined, deterministic workflows | No judgment, no content generation — ever |
-| **Data Storage** | **Storage:** durable, core-owned store for the files, artifacts, and Baxter's long-term memory | One standard store; connectors and workflows access it through the core |
-| **Backup / Recovery** | **Continuity:** scheduled off-host backups and tested restoration of everything the core owns | Nightly, off-host, versioned; restore drills required |
-| **Secrets Service** | **Security:** the only client of the password vault; serves secrets to agents and workflows under per-role scope | Least privilege per role; in-memory cache only; every access logged |
-| **Memory Service** | **Memory:** core-owned long-term memory; serves remember / recall / forget / summarise to all roles under per-role scope | Required by the core; store shape chosen per deployment (§7.5) |
-| **Messaging Channel** (human gateway) | **Interaction:** the defined channel between the system and the business owner and employees — conversation, alerts, approval gates | e.g., Telegram, Buzz, or any equivalent messaging platform |
-| **API / Event Gateway** (machine gateway) | **Interaction:** inbound events from connectors and external systems; outbound calls from the core | **MCP first** — Model Context Protocol where the vendor provides it; documented REST APIs otherwise |
+| **Baxter — Coordinator** | Judgment, conversation, routing, approval gates, memory governance, configuration | The only source of judgment in the system |
+| **Host runtime** | Agent loop, channel, tool plane, memory, files, possibly a scheduler | Supplied by the platform; mapped by a requirements document (§9) |
+| **Business services** | CRM, accounting, email, social, website | Two surfaces each: agent and flow (§5) |
+| **Automation provider** *(optional)* | Builds and runs deterministic flows between services | A connector with a meta-capability; may be absent |
+| **Run ledger** | Records every flow, run and result | The truth of what automation exists and what it did |
+| **Secrets source** | External vault, host-native store, or hybrid | Declared per deployment (§7.4) |
+| **Memory** | Long-term knowledge | Core service or host-native port (§7.5) |
+| **Data storage** | Files and artifacts | Core-owned or host-owned |
+| **Backup / recovery** | Off-host, versioned copies of what the core owns | Provider workflows are recompiled from specs (§7.1) |
+| **Messaging Channel** | Human gateway: conversation, alerts, approval gates | e.g. Telegram, Slack, the host UI |
+| **API / Event gateway** | Machine path into services | MCP first, documented REST otherwise |
 
-**Layering rule:** deterministic work → the Workflow Engine; judgment and creativity → Baxter; approval gates → a human, reached through the Messaging Channel.
+**Two modes, not two layers:** conversation is Baxter acting on a service; a flow is services acting on each other. Determinism belongs to flows, judgment to Baxter, approval to a human — but neither mode owns the other.
 
 ---
 
 ## 3. Architecture Diagram
 
-The **Messaging Channel is highlighted** — the single, clearly defined human-facing gateway for the business owner and employees. The **Config Workspace** (agent-local git, §7.2) holds every per-deployment setting (§7.2, §8.1); the skill bundles the fixed instruction set (§8.1).
-
 ```text
-Business Owner ──┐
-                 ├──────────►  [ Messaging Channel — human gateway ]
-Employees ───────┘             conversation · alerts · approval gates
-                                  │
-                                  │  conversation / requests / approvals
-                                  ▼
-                     [ Baxter — AI Agent ] — judgment · orchestration
-                                  │
-                 ┌────────────────┼──────────────────────────────┐
-                 │                │                              │
-         reads / │ writes         │  delegates predefined tasks  │  instruction set +
-                 │                │  events and results back     │  deployment config
-                 ▼                ▼                              ▼
-      [ Data Storage ]    [ Workflow Engine ]          [ Config Workspace ]
-      files · artifacts   deterministic automation     versioned (git) —
-                                                        per-business deployment
-                                                        config (§7.2)
-              │                │
-              │                │  events in / calls out
-              ▼                ▼
-      [ Memory Service ]  [ API / Event Gateway ]
-      long-term memory ·  machine gateway — MCP first,
-      per-role namespaces REST otherwise
-              │                │
-              │ nightly backup │  events in / calls out
-              ▼                ▼
-      [ Backup / Recovery ][ Secrets Service ]          [ Connectors ]
-      off-host · versioned  vault client —              chosen per business
-                            per-role scoped             Website · CRM · Email ·
-                                                        Social · Accounting
+Business owner ──┐
+Employees ───────┴──────────►  [ Messaging Channel ]
+                                      │ conversation · requests · approvals
+                                      ▼
+                        ┌─────────────────────────────┐
+                        │  CORE (identical everywhere) │
+                        │                              │
+                        │  Baxter — judgment · gates   │
+                        │  Config workspace (git)      │
+                        │  Run ledger                  │
+                        │  Secrets broker / adapter    │
+                        │  Memory + storage            │
+                        └─────────────────────────────┘
+                                      │
+              conversation (tools)    │    author / inspect / results
+                 ┌────────────────────┴───────────────────┐
+                 ▼                                        ▼
+      ┌─────────────────────┐                 ┌──────────────────────┐
+      │  Connected services │◄─── flows ─────►│  Automation provider │
+      │  CRM · Email · …    │   (direct)      │  n8n · Zapier · …    │
+      └─────────────────────┘                 └──────────────────────┘
 ```
 
 **How to read it:**
 
-- Humans interact **only** through the Messaging Channel; connectors and external systems interact **only** through the API / Event Gateway. Nothing bypasses the core.
-- All connector traffic flows through the gateway — events in, calls out. Deterministic handling goes to the Workflow Engine; judgment goes to Baxter.
-- Machine connections use **MCP** wherever the vendor exposes an MCP server, and documented REST APIs otherwise — the choice is made once per connector, never per deployment.
-- Baxter's instruction set comes bundled in the skill (§8.1); every per-business setting lives in the Config Workspace (versioned, git, §7.2) and is applied to the deployment, never typed into it (§7.2, §8).
-- Secrets, memory, and configuration are core services: the Secrets Service guards vault access (§7.4), the Memory Service owns long-term memory (§7.5), the skill feeds the instruction set (§8.1), and the Config Workspace holds every per-business setting (§7.2).
-- Connectors never talk to each other directly and never hide data — customer records live in the CRM connector; working files and artifacts live in core Data Storage.
+- Baxter holds a tool connection to every enrolled service; that is the conversation path.
+- The automation provider is a service like any other. Baxter instructs it to build a flow; after that the services exchange data directly and Baxter is out of the path.
+- Results come back through the run ledger: flow → run → output. Baxter checks the provider, then the service, only when it needs the outcome.
+- Connectors never talk to each other outside a declared flow or a recorded provisional flow.
+- Per-business configuration lives in the git workspace. The host's own settings are an implementation detail and never the source of truth.
 
 ---
 
 ## 4. Division of Labour
 
-| Work Type | Owner | Examples |
+| Work type | Owner | Examples |
 |---|---|---|
-| Deterministic, predefined | **Workflow Engine** | Inbound event → create CRM record; scheduled syncs; triggered routing and transformation |
-| Judgment / creativity | **Baxter** | Interpreting a staff request, matching an ambiguous record, drafting customer-facing content, recommending next steps |
-| Approval | **Human** (via Messaging Channel) | Sign-off before any public-facing, customer-visible, or irreversible action |
+| One-off ask, lookup, interpretation, drafting | **Baxter (conversation)** | "What did we invoice Acme?", "Draft a reply", "Which job is late?" |
+| Repeatable, predefined, no interpretation | **Flow** | New contact → email list; invoice status → job; website lead → CRM |
+| Public, customer-visible, financial, destructive | **Human approval gate** | Publish a post, send a campaign, issue a refund, bulk delete |
 
 ```mermaid
 flowchart TD
-    T(["Work arises"]) --> Q1{"Predefined steps,<br/>no judgment needed?"}
-    Q1 -->|"Yes"| WFE["Workflow Engine executes it"]
-    Q1 -->|"No — needs interpretation,<br/>drafting, or a decision"| BAX["Baxter handles it"]
-    BAX --> Q2{"Public-facing or<br/>irreversible action?"}
-    Q2 -->|"No"| DONE["Baxter completes the action"]
-    Q2 -->|"Yes"| GATE["Approval gate — human confirms<br/>via the Messaging Channel"]
-    GATE -->|"Approved"| EXEC["Execute — Baxter acts, delegating any<br/>deterministic steps to the Workflow Engine"]
+    T(["Work arises"]) --> Q1{"Repeatable and<br/>fully predefined?"}
+    Q1 -->|"No"| BAX["Baxter handles it in conversation"]
+    Q1 -->|"Yes"| Q2{"Is it worth a durable flow?"}
+    Q2 -->|"No"| BAX
+    Q2 -->|"Yes"| FLOW["Build a flow via the provider<br/>(declared, or provisional if internal)"]
+    BAX --> Q3{"Public, financial,<br/>or destructive?"}
+    Q3 -->|"No"| DONE["Baxter acts"]
+    Q3 -->|"Yes"| GATE["Human approval gate"]
+    FLOW --> Q3
+    GATE -->|"Approved"| EXEC["Act — directly, or let the flow's<br/>paused step resume"]
     GATE -->|"Rejected or unclear"| BAX
 ```
 
-**Escalation chain:** Workflow Engine → Baxter → Human.
+**Escalation chain:** flow → Baxter → human.
 
 ### 4.1 Baxter — Internal Roles
 
 The default is **one agent with scoped tools, not many**. Specialist agents exist only where a single shared context becomes unsafe — three drivers justify a split:
 
-1. **Credential / trust scope** — an agent that can publish or touch money must not hold routine credentials; least privilege per agent shrinks the blast radius of a mistake.
-2. **Context isolation** — creative work (brand voice, drafting) and operational work (customers, invoices) pollute each other's memory; separate scopes stop one context from contaminating another.
+1. **Credential / trust scope** — an agent that can publish or touch money must not hold routine credentials.
+2. **Context isolation** — creative and operational work pollute each other's memory.
 3. **Concurrency** — a long creative job must not block an urgent operational request.
 
 | Role | Scope (tools / memory / credentials) | Activated when | Never does |
 |---|---|---|---|
-| **Baxter — Coordinator** | Routing, approval gates, memory governance, system setup (§8) | Always | — |
-| **Content Specialist** | Drafting and brand voice; content / social connector tools; creative memory scope | Deployment includes content or social connectors | Publishes or sends anything without the Coordinator's human approval gate |
-| **Operations Specialist** | Customer, job, and finance data tasks; CRM / accounting connector tools; operational memory scope | Deployment includes CRM or accounting connectors | Touches publishing tools or takes any public-facing action |
-| **Customer Engagement Specialist** | Customer chat on public channels (website widget, WhatsApp); FAQ and lookup tools; create CRM contacts; customer-facing memory scope | Deployment includes a customer chat channel | Commits the business — no promises, quotes, cancellations, or refunds; no access to finance or staff-facing tools |
-
-```mermaid
-flowchart TB
-    OWN(["Business Owner"])
-    EMP(["Employees"])
-    OWN --> COORD
-    EMP --> COORD
-    COORD{{"Baxter — Coordinator<br/>routing, gates, memory"}}
-    COORD -->|"creative / drafting"| CONTENT["Content Specialist"]
-    COORD -->|"data / ops tasks"| OPS["Operations Specialist"]
-    CONTENT -->|"approval gate"| COORD
-    OPS -->|"results"| COORD
-    COORD -->|"delegates deterministic"| WFE["Workflow Engine"]
-    CUST(["Customers"])
-    CUST -->|"website chat / WhatsApp"| CE["Customer Engagement Specialist"]
-    CE -->|"commits the business?<br/>escalates"| COORD
-    CE -->|"mechanics — bookings,<br/>contact creation"| WFE
-```
+| **Baxter — Coordinator** | Routing, approval gates, memory governance, setup | Always | — |
+| **Content Specialist** | Drafting and brand voice; content / social tools; creative memory | Deployment includes content or social services | Publishes without the Coordinator's gate |
+| **Operations Specialist** | Customer, job, finance tasks; CRM / accounting tools | Deployment includes CRM or accounting | Touches publishing tools or acts publicly |
+| **Customer Engagement Specialist** | Customer chat; lookup tools; create CRM contacts | Deployment includes a customer chat channel | Commits the business — no promises, quotes, cancellations or refunds |
 
 **Rules:**
 
-1. **Business people talk only to the Coordinator.** Staff-facing specialists are internal — no messaging endpoints of their own; the Coordinator routes and gates everything. **Customers are the one exception:** they interact only with the Customer Engagement Specialist, never with the Coordinator.
-2. **Roster fixed by the core, activation per deployment.** The core defines the roles; a deployment activates only what its connector set needs — the same rule as connectors (§5).
-3. **Scopes are locked.** Each specialist holds only its own tools, memory, and credentials — no cross-scope access, ever.
-4. **No specialist publishes or spends — and the Customer Engagement Specialist never commits the business.** Anything public-facing, irreversible, or with business consequence passes the Coordinator's human approval gate — the same rule as connector actions (§5).
-5. **Memory stays separate.** Each role keeps its own memory scope (§7.3); the Coordinator persists summaries of specialist work, so results survive without context pollution. Customer conversations are summarised into CRM leads (via the Workflow Engine); raw chat content is not retained — quotes, invoices, and records live in the connectors.
-6. **Design the seams now, activate later.** Default deployments run Baxter alone; split when symptoms appear — memory bloat, wrong-tool invocations, or creative context contaminating an operational decision. A split is a configuration change (§7.2), not a rebuild.
-7. **Roles, not profiles.** Profiles and bots (Hermes or otherwise) are implementation details; the framework defines roles and scopes, and cheap implementation never skips the justification test.
-
-**Escalation:** staff requests — Coordinator → human; customer requests — Customer Engagement Specialist → Coordinator → human via the Messaging Channel.
-
-**Deliberately not added:** a Finance agent (finance work is mostly deterministic — the Workflow Engine owns it), a Tech/Admin agent (setup is Baxter's job, §8), or per-connector agents (tool count is not a reason to split).
+1. **Business people talk only to the Coordinator.** Customers are the exception: they reach only the Customer Engagement Specialist.
+2. **Roster fixed by the blueprint, activation per deployment.** Roles exist in the blueprint; a deployment activates only what its services need.
+3. **Scopes are locked.** Each specialist holds only its own tools, memory and credentials.
+4. **No specialist publishes, spends or destroys.** Every such action passes a human gate — including when it runs inside a flow.
+5. **Memory stays separate.** Each role keeps its own memory scope; the Coordinator persists summaries.
+6. **Design the seams now, activate later.** Default deployments run Baxter alone.
+7. **Roles, not profiles.** Profiles, bots and subagents are implementation details. A host's task-bot feature never creates an unauthorised role.
 
 ---
 
-## 5. Connectors
+## 5. Connectors and Providers
 
-Connectors are business capabilities layered onto the core. Illustrative set:
+A **connector** is any enrolled service. Three kinds:
 
-| Connector | Purpose | Typical path into the core |
+| Kind | What it is | Examples |
 |---|---|---|
-| **Website** | Public presence, lead capture | Emits events into the API / Event Gateway → Workflow Engine |
-| **CRM** | Customer relationship management — the single source of truth for customer records | Workflow Engine (deterministic) + Baxter (judgment) |
-| **Email Marketing** | Campaigns and transactional sends | Workflow Engine (scheduled/sync) + Baxter (drafted sends) |
-| **Social Scheduler** | Publishing social posts | Baxter drafts → approval gate → Workflow Engine publishes |
-| **Accounting** | Invoicing, payments, reconciliation | Workflow Engine (deterministic syncs) |
+| `business` | A service that holds or moves business data | CRM, accounting, email marketing, social, website |
+| `automation` | A service that builds and runs flows between other connectors | n8n, Zapier, Make, host routines |
+| `broker` | A service that fronts many apps and holds their grants | Composio, Pipedream |
+
+Every connector declares **two surfaces**:
+
+- **Agent surface** — how Baxter may converse with it (`mcp`, `openapi`, `rest`, or `none`). Some services are read-only or not safe to expose to the agent at all.
+- **Flow surface** — how a flow may call it (`rest`, `webhook`, `native`, or `none`).
+
+A surface may be absent. A connector that exposes neither is not enrollable.
 
 **Connector rules:**
 
-1. Optional and swappable — added only when a deployment needs them, replaceable without touching the core.
-2. Interact with the system only via the core (gateways, Workflow Engine, Baxter, Data Storage) — never directly with each other.
-3. Exactly one connector per deployment is the system of record for customer data (the CRM). Connectors may not keep parallel copies.
-4. Any connector action that is public-facing or irreversible passes the human approval gate via the Messaging Channel.
-5. Connect via **MCP** wherever the vendor provides an MCP server; otherwise use the documented REST API. The connection standard is chosen once per connector, never per deployment.
-6. **Native integration precedence.** Where a connector offers a tight, vendor-native integration (or a direct MCP/API path) that fulfils a sync, that native path **takes precedence** over building a Workflow Engine job — the engine is used only where no native path exists. Every declared sync records how it runs (`via: native | n8n`, §7.6); only engine-run syncs become workflows.
+1. Optional and swappable — added only when a deployment needs them, replaceable without touching the blueprint.
+2. Enrolled only through onboarding and setup. Never added, removed or re-scoped in conversation.
+3. Provisioned by the core; after provisioning, direct traffic is allowed **only** inside a declared flow or a recorded provisional flow.
+4. Exactly one business connector per deployment is the system of record for customer data. Other connectors may hold bounded replicas with a declared direction.
+5. Public, financial or destructive actions pass a human gate, wherever they execute.
+6. **MCP first** wherever the vendor provides it; documented REST otherwise. The standard is chosen once per connector.
+7. **Native integration precedence.** If two vendors already integrate, the native path wins over building a flow. The flow exists only where no native path is adequate.
+8. A deployment may legally have **zero** automation providers and **zero** flows.
+
+### 5.1 Automation providers
+
+An automation provider is a connector whose special capability is to wire other connectors together. The provider contract (`connectors/automation.md`) requires it to declare:
+
+- **authoring** — `programmatic` (Baxter can create and edit flows via an API/MCP) or `manual` (the owner builds in the vendor UI; Baxter records and verifies);
+- **pause** — whether a flow can stop and wait for a human approval;
+- **runs** — whether Baxter can read run history and status;
+- **triggers/actions** — schedule, webhook, event, and the action classes it can perform;
+- **idempotency** — whether a retried step can be made safe.
+
+A provider without `pause` may never hold credentials for a gated action. A provider without `runs` cannot be the default source of results.
+
+### 5.2 Flows
+
+A flow is a durable route between two connectors:
+
+```text
+trigger → steps → (approval pause?) → final action → outcome
+```
+
+- **Declared flows** are agreed during onboarding and recorded in `deployment.yaml` with a portable spec in `flows/<id>.md`.
+- **Provisional flows** are built in conversation for internal, reversible work. They are recorded in the run ledger with `origin: conversational`, scoped credentials, and an expiry. They are promoted to declared, or they expire and are revoked (§7.7).
+- **Gated flows** publish, send, spend or destroy. They must pause for the owner; if the provider cannot pause, Baxter performs that action itself after approval.
+- Flows never generate content and never make judgment calls. A step that needs either calls back to Baxter.
 
 ---
 
@@ -179,393 +186,336 @@ Connectors are business capabilities layered onto the core. Illustrative set:
 
 A new business deployment is assembly, not engineering:
 
-1. **Install** — deploy the agent harness (Baxter, Workflow Engine, Data Storage, Gateways are what the core provides), install the Baxter skill unchanged (§8.1), and open one Messaging Channel.
-2. **Onboard** — Baxter runs the Onboarding Protocol (§8.6) with the business owner: a structured questionnaire that produces the Deployment Config in the config workspace (§7.2).
-3. Select and connect the connectors that business needs.
-4. Configure the predefined workflows in the Workflow Engine, Baxter's persona and business context, and the Messaging Channel endpoints.
-5. Define the approval gates appropriate to that business.
-6. Run the setup protocol — Baxter learns the chosen connectors and drives their configuration and syncs through the human approval gates (§8).
+1. **Choose the host** and read its requirements document (`docs/<harness>-requirements.md`). Record its ports and degraded capabilities.
+2. **Install** the blueprint — as a skill where the host supports it, as an instruction brief or an operator runbook where it does not (§8.1).
+3. **Onboard** — run the questionnaire, produce the Deployment Config, commit it.
+4. **Enrol services** — connect the chosen connectors with their declared surfaces and secret references.
+5. **Add automation, if needed** — zero or more providers, chosen then or later.
+6. **Build flows** — declared flows get specs and are compiled; provisional flows stay in the ledger.
+7. **Run setup** — plan, approve, apply, verify, document.
 
-> **Operational defaults:** all per-business configuration is tracked as code in the agent-local config workspace, backed up per the owner's choice (§7.2), backup/recovery is enabled from day one (§7.1), and setup is agent-driven (§8).
+> **Operational defaults:** per-business configuration is code in a git workspace, backed up per the owner's choice; the secret source is declared, not assumed; setup is agent-driven with the owner at the gates.
 
 ---
 
-## 7. Core Operations — Backup, Configuration, Memory, Secrets
+## 7. Core Operations
 
-The core is a business system, not a script — it ships with four operational capabilities: **backup and restoration**, **configuration tracking**, **memory management** for Baxter, and **secrets management**. All four are core-owned: identical in structure in every deployment, configured per business.
+All four capabilities — backup, configuration, memory, secrets — are blueprint-owned in structure and deployment-decided in mechanism.
 
 ### 7.1 Backup and Restoration
 
-**Principle: the core backs up what it owns.** Connector and SaaS data (CRM, accounting, email marketing, …) is handled by its vendor; the core is responsible for restoring everything it created.
+**Principle: each party backs up what it owns.**
 
-| Item | Source | Restores |
+| Item | Owner | Restores |
 |---|---|---|
-| File store | Object store bucket (S3-compatible) — files and media | Every artifact the system works with |
-| Baxter's long-term memory | Core Data Storage | Agent knowledge, facts, history |
-| Workflow definitions | Workflow Engine | Automated flows, triggers, routing |
-| Configuration | Versioned repository (§7.2) | Persona, business context, approval gates, endpoints |
-
-```mermaid
-flowchart LR
-    DS[("Core Data Storage")] --> B["Nightly backup job"]
-    WFE["Workflow Engine definitions"] --> B
-    B -->|"encrypted sync"| OFF["Off-host backup store<br/>separate host / location"]
-    B -->|"retention"| VER["Versioned history"]
-    DR["Restore drill — quarterly"] -. tests .-> OFF
-```
+| Config workspace, flow specs, learned profiles | Core | Every per-business setting and route definition |
+| Memory, files, artifacts | Core or host, as declared | Agent knowledge and working files |
+| Flow definitions *inside the provider* | Provider | Its own runtime state — or recompiled from the spec |
+| Service data (CRM, accounting, …) | Vendor | Their own durability |
 
 **Rules:**
 
-1. **Off-host and nightly.** Backups leave the deployment machine — a backup on the same disk dies with the host.
-2. **Versioned retention.** Restore any point in time, not just "latest".
-3. **Restore drills are mandatory.** An untested backup is a guess. Drill: wipe the stack, re-apply configuration from the repository, restore data, verify workflows and memory are intact.
-4. **Restoration is deterministic:** configuration comes back from the repository, data comes back from the backup store.
+1. **Off-host and nightly** for everything the core owns.
+2. **Versioned retention** — restore any point in time.
+3. **Specs make flows portable.** A lost provider is rebuilt by recompiling the flow specs, not by hoping the vendor exported them.
+4. **Restore drills are mandatory.** Wipe, re-apply config, restore data, verify flows.
 
-### 7.2 Configuration Tracking — Configuration as Code
+### 7.2 Configuration as Code
 
-Every per-business difference — Baxter's persona and business context, workflow definitions, approval-gate rules, Messaging Channel endpoints — lives in a **versioned repository** (git) and is *applied* to the deployment rather than *typed into* it.
+Every per-business difference lives in a **git workspace** and is *applied*, never typed into the running system.
 
 **Rules:**
 
-1. **The repository is the source of truth for configuration.** No edits directly on the running system; changes flow repository → deploy. The repository is the **config workspace** — an agent-local git repository created by Baxter at bootstrap (§8.2); it is a real git repository even when it never leaves the agent.
-2. **Every change is versioned and reversible.** "What changed before the approval gate broke?" is answered by the git history.
-3. **Deployments are reproducible.** A new deployment (§6) is: install the skill → Baxter creates the workspace → onboard → apply. Assembly, not engineering.
-4. **Backup and restore are one system.** Config comes back from the repository; data comes back from the backup store. The workspace is backed up to a **private git remote when the owner provides one**; if the owner declines, the config stays local-only and Baxter warns explicitly that agent-level backup must cover it — a business-critical system is expected to have its agent's configuration backed up (§8.2). Business configuration is never pushed to a public repository.
-5. **Versioned and pinned.** The core is released under semantic version tags; every deployment pins the core version (the installed skill version) and each Connector Pack version (§8.2). What is running, and in which version, is exactly knowable for every deployment — updates are explicit, never silent, and flow only through a deliberate skill update.
+1. The workspace is the source of truth. The host's native settings are an implementation detail.
+2. Every change is versioned and reversible.
+3. Deployments are reproducible: install → workspace → onboard → apply.
+4. Backup: private remote if the owner provides one; otherwise local-only with an explicit warning. Business configuration is never pushed to a public repository.
+5. **Versioned and pinned.** The blueprint (`VERSION`), the schema (`schema_version`), each Connector Pack and the host adapter are pinned in the config. Updates are explicit, never silent.
 
-### 7.3 Baxter — Memory Management
+### 7.3 Memory Management
 
-Baxter remembers in three tiers, all core-owned:
+Three tiers, all core-owned or host-declared:
 
-| Tier | What it holds | Lifecycle |
+| Tier | Holds | Lifecycle |
 |---|---|---|
-| **Working memory** | The active conversation — context for the current task | Volatile; dies with the session |
-| **Long-term memory** | Persistent facts and preferences — e.g. "owner approves posts by 9am", client contact preferences, past decisions | Stored in core Data Storage; summarised, pruned, and retired on a schedule; backed up nightly |
-| **Artifacts** | Files and media (photos, documents) | Stored in the file store; referenced, never duplicated |
+| Working | Active conversation and task context | Volatile |
+| Long-term | Persistent facts and preferences | Store declared per deployment; summarised and pruned; backed up |
+| Artifacts | Files and media | File store; referenced, never duplicated |
 
-**Rules:**
-
-1. **Memory is core-owned.** It lives in core Data Storage and is restored with it — memory survives restarts, redeploys, and disasters.
-2. **No parallel copies.** Customer records stay in the CRM connector — Baxter's memory never duplicates them. Memory holds core knowledge and agent-level facts only.
-3. **Retrieve, don't stuff.** Memory is fetched on demand (search / retrieval) when a task needs it, not loaded wholesale into context.
-4. **Keep it lean.** Summarise finished work, prune stale facts, retire what is no longer true — memory quality beats memory size.
-
-> **The mechanism — where and how long-term memory is stored — is a deployment decision, specified in the Deployment Config (§7.5, §8.2).**
+**Rules:** memory is core-owned; no parallel copies of connector data; retrieve, don't stuff; keep it lean; raw chat and email are not retained.
 
 ### 7.4 Secrets Management
 
-Secrets — AI provider API keys, service passwords, credentials — are a **core-owned concern**. Humans manage them in a password vault (e.g., Bitwarden); agents and workflows never talk to the vault directly. They request secrets through a thin, core-owned **Secrets Service**, which is the only component that holds vault access.
+Secrets are a **declared source**, chosen per deployment:
 
-```text
-[ Baxter / specialists / Workflow Engine ]
-              │  MCP / REST — "secret X, scope Y"
-              ▼
-        [ SECRETS SERVICE — core-owned ]
-        · per-role scoping · in-memory cache only
-        · audit log of every access
-              │
-              ▼
-        [ Password vault — e.g., Bitwarden ]
-        humans manage secrets here, in the UI
-```
+| Source | What it means | Trade-off |
+|---|---|---|
+| `vault` | External password manager (Bitwarden, 1Password, Infisical) reached through a Secrets Service | Strongest central scoping and audit; needs a vault and a root secret |
+| `native` | The host's own encrypted store (profile env, connector credentials, Vault) | Zero extra infrastructure; scoping is limited to what the host enforces |
+| `hybrid` | Vault for core-owned secrets; native for connector grants the host brokers | Practical default for platforms with their own connector OAuth (Rakazo, Grok Bot, Nod) |
 
 **Rules:**
 
-1. **The Secrets Service is the only vault client.** Agents and workflows ask it; it authenticates, fetches, caches in memory only (never written to disk), logs every access, and re-handles expired vault sessions itself.
-2. **Least privilege is enforced, not hoped for.** The service grants secrets per role (§4.1): the Coordinator may access all scopes; each specialist only its own. A specialist that must not touch finance credentials literally cannot — the service refuses. Never trust a model to self-scope.
-3. **Secrets never enter the config repository (§7.2).** The repository holds references and scopes; the vault holds values. No `.env` files, no encrypted-at-rest config files — the vault is the only store.
-4. **One root secret, well guarded.** Something must unlock the vault — a single bootstrap secret kept on the host only (file with restricted permissions, Docker secret, OS keyring, or TPM), never in git, with an offline copy (paper / offline media) for disaster recovery.
-5. **The vault joins the backup scope (§7.1).** Nightly encrypted export to the off-host backup store, so a restore brings secrets back with it; the offline root secret covers total loss.
-6. **Component-local stores stay minimal.** n8n keeps its own credential store for its own workflows; the vault is the canonical store for everything agent-accessible. No parallel copies.
-7. **Per-role provider keys.** AI provider keys can be issued per role (content uses one provider/key, operations another) — isolation without extra infrastructure.
-8. **Swap-friendly.** The Secrets Service is the only integration point: a different vault backend (e.g., Infisical, Vault) replaces Bitwarden without touching any agent.
+1. **References, never values.** The config holds source + reference + scope + rotation; the store holds the value.
+2. **One path to values.** Either the Secrets Service or the host adapter; never both for the same secret.
+3. **Least privilege where the source allows it.** If the native store cannot enforce per-role scopes, the deployment declares the limitation and compensates with provider-side scopes, short-lived grants, and rotation.
+4. **Secrets never enter the repository, flow definitions or chat.** A value pasted into chat is compromised; instruct rotation.
+5. **Backup follows the source.** Vault joins the encrypted backup; native stores join only if the platform exports them, otherwise the build is documented in the runbook.
+6. One root secret, well guarded, with an offline copy.
 
 ### 7.5 The Memory Service — Store and Mechanism
 
-The core **requires** long-term memory — Baxter cannot operate without it (§7.3). But *where it is stored and how* is a **deployment decision**, made in the Deployment Config (§8.2) at setup time, not baked into the core.
+The deployment chooses the mechanism; the requirement is constant.
 
-**Principle: the harness is stateless; memory is a core-owned service.**
+| Decision | Options | Guidance |
+|---|---|---|
+| Provider | `core-service` · `host-native` | `core-service` is portable; `host-native` is opt-in and lossy |
+| Store | sqlite · postgres-pgvector · host store | Match the host; keep it inside the backup scope |
+| Namespaces | per role on/off | All activated roles enabled |
+| Retention | summarise / prune schedule | e.g. 14 / 90 days |
+| Embeddings | off · local · api | Off by default; a later upgrade behind the same recall API |
 
-- All long-term memory flows through a core-owned **Memory Service** — remember / recall / forget / summarise, exposed via MCP and REST.
-- The agent harness is a stateless brain pointing at the service. Harness-built-in memory counts as volatile working memory only, never as the store of record — this keeps memory portable when the harness is swapped (§4.1 "roles, not profiles").
-- Connector Packs are *static* knowledge (bundled in the skill, §8.1); the Memory Service holds *dynamic* knowledge only. The two never overlap.
+Host-native memory must be declared as degraded for portability. Role scoping is enforced by the service where one exists; otherwise the host's isolation model applies and is recorded.
+
+### 7.6 Automation — the Optional Add-on
+
+The automation provider is **not** a core component. It is an enrolled connector that can build flows between services. Consequences:
+
+1. **Zero is valid.** A deployment can run conversation-only, or with native vendor syncs and no provider.
+2. **Added later.** Adding n8n, Zapier or Make is a setup operation with its own plan and approval, not a rebuild.
+3. **Baxter authors where it can.** With `authoring: programmatic`, Baxter creates and tests flows through the provider's MCP/API. With `manual`, the owner builds and Baxter records and verifies.
+4. **Flows run without the agent.** Once built, services call each other directly.
+5. **Results are polled or pushed through the ledger.** Baxter checks the provider for run status by default; checks a service only when the flow is native or the provider cannot report.
+6. **No duplicate scheduling.** One scheduler of record per flow — the provider *or* the host's routines, never both.
+7. **Portable specs.** Every flow has a provider-neutral spec in `flows/`. Swapping providers recompiles the spec; it does not re-interview the owner.
+
+### 7.7 The Run Ledger
+
+The ledger is the truth of automation in a deployment:
 
 ```text
-[Baxter / specialists — any harness]
-              │  MCP / REST — remember · recall · forget · summarise
-              ▼
-        [ MEMORY SERVICE — core-owned ]
-        · role-scoped namespaces (§4.1)   · audit log
-        · lifecycle jobs — summarise / prune / retire
-              │
-              ▼
-        [ Memory store — shape chosen per deployment ]
-        sqlite (default) | postgres + pgvector
-              │
-              ▼
-        nightly backup with core (§7.1)
+flow id → provider → run id → status → output resource → approved by → expires
 ```
 
-**The deployment decision** (set in `deployment.yaml`, §8.2):
-
-| Decision | Options | Default / guidance |
-|---|---|---|
-| Provider | `memory-service` (core-owned) · `harness-native` | `memory-service` — the only portable choice |
-| Store | `sqlite` (single file, zero ops) · `postgres-pgvector` (standard, semantic-ready) | `sqlite` for small deployments |
-| Location | store path / connection | inside core Data Storage so §7.1 covers it |
-| Namespaces | per role on/off (§4.1) | all activated roles enabled |
-| Retention | summarise / prune schedule | e.g., summarise at 14 days, prune at 90 days |
-| Embeddings | `off` · `local` · `api` | `off` — a later upgrade behind the same recall API |
-
-**Rules:**
-
-1. **Memory is mandatory; the shape is configurable.** The core always requires long-term memory; only the store shape, location, and lifecycle are deployment choices.
-2. **Harness-native memory is opt-in and lossy.** A deployment may pick `harness-native` only by accepting that memory is not portable, not role-scoped, and not in the deterministic backup path.
-3. **Role scoping is enforced by the service, not the harness** (§4.1).
-4. **Lifecycle is scheduled, not ad-hoc:** a deterministic trigger in the Workflow Engine fires; summarisation (judgment) goes to the owning specialist; pruning and retirement (deterministic) run in the Workflow Engine.
-5. **Memory joins backup and restore drills** (§7.1).
-
-### 7.6 The Workflow Engine — Mechanism and Deployment Decision
-
-The Workflow Engine (§2) is the deterministic automation layer: it executes the predefined, judgment-free work — cross-connector syncs, scheduled jobs, webhook handling, routing and transformation. Judgment and content generation never enter it — ever.
-
-**Standard stack: n8n, self-hosted.** The default Workflow Engine provider is **n8n** — open source, self-hosted, MCP-native — configured and driven by Baxter through the **official n8n MCP server**. Baxter authors, tests, validates, and publishes workflows via the MCP tool surface; it never hand-writes workflow JSON from memory (§8.3). The engine choice is recorded in the Deployment Config (§8.2):
-
-| Decision | Options | Default / guidance |
-|---|---|---|
-| Provider | `n8n` · `harness-native` | `n8n` — the standard stack. Optional-with-warning: absent → the deployment runs harness-native and Baxter records the risk (S13) |
-| Deployment | `internal` · `external` | `internal` — n8n co-located on the same VPS as the harness (Docker). `external` — separate host, for isolation or scale |
-| Endpoint | base URL | `http://localhost:5678` for internal — a sensible default, confirmed at setup, never guessed |
-| Connection | `mcp` | MCP-first via the official n8n MCP server (§5 rule 5) |
-| Secrets | vault path | `vault/connectors/n8n` — the MCP bearer token; humans store values (§7.4 rule 6: n8n's credential store is component-local; workflow JSON never contains secrets) |
-
-> **Hosting note:** the standard deployment runs the harness on a **VPS** with n8n co-located (`internal`). Harnesses that cannot host Docker sidecars (e.g., Hermes Cloud) cannot serve the standard stack — they pair only with an `external` engine or fall back to `harness-native`.
-
-**Rules:**
-
-1. **Native integration precedence.** Before any sync is built as a Workflow Engine job, Baxter checks for a connector-native path — a vendor-native integration or a direct API/MCP call. **Native wins**; the engine fills only the gaps (§5 rule 6). Workflows are built only where required.
-2. **Syncs are declared, never improvised.** Every sync — native or engine — is declared in `sync_topology` with its `via` (§8.5 rule 4, S12). A sync that is neither declared nor explicitly declined is a gap Baxter flags, never silently drops (S15).
-3. **Authoring standards.** Workflows are authored only through the n8n MCP tool surface (search nodes, verify schemas, build, test, validate) — never from memory; native n8n nodes over Code nodes; small modular sub-workflows over monoliths; one "Configuration" node as the single adjustable-variables entry point, which never holds secrets. A workflow is activated only after test → validate → verify.
-4. **Credentials stay component-local and human-set.** n8n keeps its own credential store for its own workflows (§7.4 rule 6); the vault path in the config points at the MCP token. No secrets in workflow JSON, ever.
-5. **Definitions are config (§7.2).** Workflow definitions and IDs are recorded in the workspace at setup Document (§8.4); n8n workflows join the §7.1 backup scope alongside the Workflow Engine definitions they are.
-6. **Classification default: ambiguous → judgment.** A task runs in the Workflow Engine only if its steps are predefined, its inputs well-defined, its outcome repeatable, and it requires no interpretation. If classification is ambiguous, Baxter treats the work as judgment — an agent never downgrades work into the deterministic layer to avoid scrutiny.
+- Created at flow creation, updated on every run.
+- Provisional flows carry `origin: conversational`, an expiry, and the scopes they hold.
+- A flow with no run record after setup is an open item, not a working flow.
+- The ledger is the source for the owner review: promote, keep, or revoke.
 
 ---
 
-## 8. System Setup & Self-Configuration
+## 8. Setup and Self-Configuration
 
-A deployment starts unconfigured. **Baxter bootstraps it**: loaded from the skill, it reads the instruction set, creates the config workspace, learns the chosen connectors, and drives their configuration — with the human at the approval gates. The instruction set is a core artifact; the setup protocol is core behaviour.
+### 8.1 The Instruction Set — Content and Carrier
 
-### 8.1 The Instruction Set — Layered
+The **content** is fixed: the constitution, the protocols, the schema, the packs. The **carrier** depends on the host:
 
-Baxter's instructions are not one prompt; they are three layers, all versioned as code (§7.2):
-
-| Layer | Contents | Where it lives |
+| Delivery mode | Host requirement | What is delivered |
 |---|---|---|
-| **Core Constitution** (immutable) | Who Baxter is — a coordinator, not an executor; the layering rule (deterministic → Workflow Engine, judgment → Baxter, irreversible → human gate); memory rules (§7.3); the no-parallel-copy rule; the connector contract (MCP-first machine connections); and the setup protocol itself | Bundled in the Baxter skill — identical in every deployment, updated only via explicit skill updates (§7.2 rule 5) |
-| **Deployment Config** | Persona details, business context, the chosen connector list, approval-gate rules, Messaging Channel endpoints | Per-deployment, in the agent-local config workspace (§7.2) |
-| **Connector Packs** | One per connector: capabilities, MCP/API surface, configuration checklist, and the expected sync topology between connectors | Bundled in the Baxter skill, per connector |
+| `skill` | Loads skills/plugins and files | `SKILL.md` + `references/` read on demand |
+| `brief` | System prompt / persona / custom instructions | `references/brief.md` pasted in, workspace path supplied |
+| `operator` | Only per-agent prompts and an admin UI | The requirements document is the runbook; an operator or setup agent creates bots, pastes the brief, connects tools |
 
-**Packaging — the skill.** The core (Constitution, protocols, questionnaire, schema, Connector Packs) is distributed as an installable **skill** (`JexxaJ/baxter`), so any skills-compatible agent harness becomes Baxter with one install. The skill is the *only* copy of the core — no parallel distribution exists. The harness-installed skill files are read-only from Baxter's perspective; per-business configuration never lives inside the skill.
+**Minimum host floor:** an instruction channel, a tool plane (MCP or API), and a durable workspace. A host without all three cannot be a Baxter host; it can only be a service Baxter calls.
 
-- The **Constitution** dictates *how Baxter behaves*; the **Connector Packs** tell it *what it is configuring*.
-- Any deployment difference belongs in the Deployment Config — never in the Constitution. The instruction set follows the core/connector split: it never changes per business, the config does.
+**No forks.** The brief is canonical and version-stamped; platform documents embed it, never rewrite it.
 
 ### 8.2 The Deployment Config — Shape and Schema
 
-The Deployment Config lives in the **config workspace** — an agent-local git repository created by Baxter at bootstrap, one directory per business (§7.2):
-
 ```text
-baxter-workspace/                # agent-local git repository — the config workspace
-└── deployments/
-    └── <business>/
-        ├── deployment.yaml      # ← the Deployment Config — what Enumerate reads
-        ├── business-context.md  # persona, facts, tone of voice — loaded into long-term memory
-        ├── connector-proficiency/
-        │   └── <connector>.md   # what Baxter learned about each locked product
-        └── onboarding-draft.md  # during onboarding only — deleted at handoff
+baxter-workspace/deployments/<business>/
+├── deployment.yaml
+├── business-context.md
+├── connector-proficiency/<connector>.md
+├── flows/<id>.md
+└── onboarding-draft.md      # during onboarding only
 ```
 
-The core and Connector Packs are **not** in the workspace — they are bundled in the skill (§8.1). The workspace holds only per-business configuration. Its backup is an onboarding decision: a private git remote if the owner provides one; otherwise local-only, with the owner explicitly warned that agent-level backup must cover it (§7.1).
-
-`deployment.yaml` declares *what is in scope* — nothing is inferred:
-
 ```yaml
+schema_version: 2
 deployment:
-  name: example-business
-  core_version: 1.0.0                      # pinned core release (§7.2 rule 5)
-  business_context: business-context.md   # loaded into long-term memory (§7.3)
+  name: harbour-electrical
+  assistant:
+    name: Nora                  # owner-chosen at Stage 0 — the runtime identity
+    slug: nora
+  core_version: 0.2.1
+  business_context: business-context.md
 
-memory:                                   # required by the core — shape is a deployment decision (§7.5)
-  provider: memory-service                # memory-service | harness-native
-  store: sqlite                           # sqlite | postgres-pgvector
-  location: /data/memory/baxter.sqlite    # inside core Data Storage
-  namespaces:                             # per role (§4.1)
-    coordinator: enabled
-    content: enabled
-    operations: enabled
-    customer_engagement: disabled
-  retention:
-    summarise_after_days: 14
-    prune_after_days: 90
-  embeddings: off                         # off | local | api — upgrade behind the same recall API
+harness:
+  platform: rakazo                 # hermes | rakazo | grokbot | nod | generic
+  delivery: brief                  # skill | brief | operator
+  adapter_version: 1.0.0
+  ports: { channel: native, runtime: native, instructions: partial,
+           roles: partial, tools: native, memory: partial,
+           scheduling: native, approvals: native, files: native,
+           secrets: native, audit: partial }
+  degraded: [memory, roles]
+
+secrets:
+  source: hybrid                   # vault | native | hybrid
+  vault_path: vault/
+  native_store: rakazo-connectors
+
+memory:
+  provider: host-native
+  store: rakazo-postgres
+  location: host
+  namespaces: { coordinator: enabled, content: enabled, operations: enabled }
+  retention: { summarise_after_days: 14, prune_after_days: 90 }
+  embeddings: off
 
 connectors:
   - name: crm
-    system_of_record: true                # exactly one, per §5 rule 3
-    connection: mcp                       # mcp | rest — chosen once, per §5 rule 5
+    kind: business
+    system_of_record: true
+    surfaces: { agent: mcp, flow: rest }
     connector_pack: connectors/crm.md
-    pack_version: 1.0.0                   # pinned pack version (§7.2 rule 5)
-    secrets: vault/connectors/crm         # vault path, NEVER values (§7.4)
+    pack_version: 1.1.0
+    secrets: { source: native, ref: rakazo/connectors/crm,
+               scope: [contacts.read, jobs.write] }
+  - name: n8n
+    kind: automation
+    provider: n8n
+    surfaces: { agent: mcp, flow: internal }
+    connector_pack: connectors/n8n.md
+    pack_version: 1.1.0
+    capabilities: { authoring: programmatic, pause: true, runs: true }
+    secrets: { source: vault, ref: vault/connectors/n8n }
   - name: email-marketing
-    connection: mcp
+    kind: business
+    surfaces: { agent: mcp, flow: rest }
     connector_pack: connectors/email-marketing.md
-    pack_version: 1.0.0
-    secrets: vault/connectors/email
-  - name: accounting
-    connection: rest
-    connector_pack: connectors/accounting.md
-    pack_version: 1.0.0
-    secrets: vault/connectors/accounting
+    pack_version: 1.1.0
+    secrets: { source: native, ref: rakazo/connectors/email }
 
-roles:                                    # §4.1 roster — activation per deployment
+roles:
   coordinator: { active: true }
-  content:          { active: true,  scopes: [email-marketing] }
-  operations:       { active: true,  scopes: [crm, accounting] }
-  customer_engagement: { active: false }  # no customer chat channel deployed yet
+  content: { active: true, scopes: [email-marketing] }
+  operations: { active: true, scopes: [crm] }
+  customer_engagement: { active: false }
 
 channels:
-  messaging: telegram/baxter-example      # human gateway endpoint
-  approvers:                              # verified identities on this channel (§8.2)
-    owner: t.me/baxter-owner-handle
-    staff: [t.me/staff1-handle, t.me/staff2-handle]
-  customer_chat: []                       # website widget / whatsapp — empty = not activated
+  messaging: telegram/baxter-example
+  approvers: { owner: t.me/owner-handle, staff: [] }
+  customer_chat: []
 
-workflow_engine:                           # OPTIONAL — preferred; warn if absent (§7.6, S13)
-  provider: n8n                            # n8n | harness-native — n8n is the standard stack
-  deployment: internal                     # internal (Docker co-located) | external
-  endpoint: http://localhost:5678          # default for internal; confirmed at setup
-  secrets: vault/connectors/n8n            # MCP bearer token — vault path, NEVER values (§7.4)
-
-sync_topology:                            # declared, never guessed (§8.5 rule 4); native wins (§5 rule 6)
-  - from: crm
-    to: accounting
-    what: invoicing
-    via: native                           # vendor-native integration — no workflow built
-  - from: crm
+flows:
+  - id: new_contact_to_list
+    from: crm
     to: email-marketing
-    what: new_contact_syncs_to_tagged_list
-    via: n8n                              # engine-built — authoring standards §7.6 rule 3
-    workflow: crm_to_email_contact_sync   # recorded by setup Document (S14)
-  - from: accounting
-    to: crm
-    what: invoice_status_updates_job
-    via: n8n
+    what: contact_synced
+    spec: flows/new-contact-to-list.md
+    provider: n8n
+    approval: none
+  - id: campaign_sent
+    from: crm
+    to: email-marketing
+    what: campaign_sent
+    spec: flows/campaign-sent.md
+    provider: n8n
+    approval: owner
 
-approval_gates:                           # each gate maps to a named approver from `channels.approvers`
-  default: owner                          # owner only — never staff
+approval_gates:
+  default: owner
+
+backup:
+  mode: private-remote
+  remote: git@example.com:business/baxter-config.git
 ```
 
-**Human identity:** gateways are configured with the **verified identities** of the people who may use them — the `approvers` map in `channels` names who is who on that channel. An approval is accepted only from the mapped identity, and every gate records **who approved**. A gate is only as strong as the proof of who pressed it, so this mapping is part of the Deployment Config, never improvised at runtime.
+**Identity.** `deployment.assistant` holds the owner-chosen name and slug; every runtime surface uses it. Baxter is only the codename.
 
-**How Enumerate uses it:** the connector list drives step 2 (which Connector Packs to load, which MCP servers to enumerate); `roles.active` decides which specialists get created and with which scopes; `sync_topology` becomes the checklist for step 6 verification; `secrets` paths are validated against the vault early so a missing credential fails at step 2, not mid-setup; `approvers` and `approval_gates` are cross-checked so no gate references an unenrolled human.
-
-**Schema.** The structure of `deployment.yaml` is formal, defined by **`references/deployment.schema.json`**. A config that fails schema structure or the semantic rules listed in the schema (`x-semantics` S1–S10) is malformed and halts setup — the config is the contract, and a malformed contract halts rather than improvises.
-
-**Failure behaviour:** a missing connector entry, an undeclared sync, or a second `system_of_record: true` stops the protocol — Baxter asks, it never guesses. The config is the contract; a malformed contract halts setup.
+**Schema.** `references/deployment.schema.json` (`schema_version: 2`) enforces structure and the semantic rules S1–S19. A config that fails either halts setup.
 
 ### 8.3 How Baxter Learns the Connectors
 
-Baxter does not memorise products; it retrieves and discovers:
-
-1. **Connector Packs** — structured, versioned documents retrieved on demand (per the §7.3 "retrieve, don't stuff" rule): what the product does, how it is configured, its MCP/API surface, and the declared sync topology.
-2. **Live self-description** — at runtime, each connector's MCP server exposes its own tools and resources, which Baxter enumerates; where a vendor has no MCP server, the REST API surface is documented in the Connector Pack instead. Either way, the connector pack stays thin and the live system is the source of truth.
-3. **Documentation** — vendor docs referenced from the connector pack when deeper detail is needed.
-
-A Connector Pack is not model training; it is lookup material — auditable, updateable, and swappable when a connector is replaced.
+1. **Connector Packs** — capabilities, both surfaces, onboarding questions, checklist.
+2. **Live self-description** — enumerate the MCP server or API at setup.
+3. **The provider's capability matrix** — authoring, pause, runs, triggers.
+4. **Documentation** — vendor docs referenced from the pack.
 
 ### 8.4 The Setup Protocol
 
-Mandated by the Constitution, so every deployment boots identically:
+Mandated by the Constitution:
 
 ```mermaid
 flowchart LR
-    A["1. Enumerate<br/>read deployment config —<br/>which connectors are in scope"] --> B["2. Learn<br/>load Connector Packs,<br/>enumerate MCP/API surface"]
-    B --> C["3. Plan<br/>written config plan +<br/>sync topology"]
-    C --> D{"4. Approve<br/>human reviews the plan"}
-    D -->|"approved"| E["5. Apply<br/>deterministic steps → Workflow Engine<br/>judgment → Baxter"]
-    D -->|"rejected / unclear"| C
-    E --> F["6. Verify<br/>smoke-test every connection<br/>and sync"]
-    F --> G["7. Document<br/>write resulting config<br/>back to the repository"]
+    A["1. Enumerate"] --> B["2. Learn"]
+    B --> C["3. Plan"]
+    C --> D{"4. Approve"}
+    D -->|"approved"| E["5. Apply"]
+    D -->|"rejected"| C
+    E --> F["6. Verify"]
+    F --> G["7. Document"]
 ```
 
-1. **Enumerate** — read the Deployment Config: which connectors are in scope.
-2. **Learn** — pull each Connector Pack; enumerate each connector's MCP/API surface.
-3. **Plan** — produce a written configuration plan: what will be configured, and the sync topology between connectors (e.g., CRM → email contact sync, CRM → accounting invoicing).
-4. **Approve** — a human reviews the plan. Configuring a live CRM or accounting system is irreversible, so the plan gates.
-5. **Apply** — execute the plan; deterministic steps delegated to the Workflow Engine, judgment calls by Baxter.
-6. **Verify** — smoke-test every connection: pull a test record, push a test record, confirm each declared sync actually fires.
-7. **Document** — write the resulting configuration back to the repository. Setup state becomes versioned, auditable, and re-appliable.
+1. **Enumerate** — read the config: host, secret source, connectors, providers, flows.
+2. **Learn** — load packs; enumerate each connector's agent and flow surfaces; learn the provider's capabilities and the host's ports.
+3. **Plan** — per-connector setup, flow specs, provider install, memory namespaces, channel enrollment, degraded ports.
+4. **Approve** — the owner reviews the plan.
+5. **Apply** — connect, install the provider if any, author or record flows, verify credentials exist.
+6. **Verify** — smoke-test each surface; run each flow and check the end-to-end effect and the ledger.
+7. **Document** — write the state back: config, flow ids, run ids, proficiency notes, degraded ports.
 
-> The full agent-facing procedure — inputs, credential provisioning, per-step outputs, and failure behaviour — lives in `references/setup-protocol.md` (identical in every deployment, §8.1). Setup consumes the Deployment Config and Connector Proficiency profiles produced by onboarding (§8.6); per-connector work is driven by each pack's Configuration Checklist (Apply) and Verification section (smoke tests).
+### 8.5 Guardrails
 
-### 8.5 Guardrails — Ensuring Baxter Behaves This Way
-
-1. **The protocol is mandatory.** The Constitution requires plan → approve → verify; Baxter cannot skip a gate or declare a job done without a successful verification.
-2. **Configuration is code.** Every setup action lands in the repository — a full audit trail of what was configured, when, and why.
-3. **Credentials stay locked.** Connector credentials live only in the vault, fetched via the Secrets Service (§7.4); Baxter references them, never stores or logs them.
-4. **Sync topology is declared, not guessed.** Baxter configures the syncs the plan declares; it never improvises new integrations between connectors.
-5. **A deployment is re-runnable.** Because step 7 documents everything, a rebuild (§7.1) or a second deployment is: apply from the repository, then verify.
-6. **The kill switch is real.** An owner- or operator-issued halt stops all agent processing — no new work, no memory writes, no connector actions — while leaving deterministic Workflow Engine jobs running. Only humans issue or release it; an agent never can. Issuing and release are logged (Constitution article 11).
+1. The protocol is mandatory: plan → approve → verify.
+2. Configuration is code: every action lands in the repository.
+3. Credentials stay with the declared source; references only.
+4. Flows are declared or provisional; no undeclared automation.
+5. A deployment is re-runnable: apply from the repository, verify.
+6. The kill switch is real, and it reaches flows.
 
 ### 8.6 The Onboarding Protocol
 
-Before the Setup Protocol can run, *someone must know what the business needs*. That knowledge is gathered by **onboarding** — Baxter runs a structured questionnaire with the business owner over the Messaging Channel and produces the Deployment Config (§8.2). Onboarding answers *what the business needs*; setup (§8.4) performs *how it is configured*.
+Onboarding answers *what the business needs*; setup performs *how it is configured*.
 
 ```mermaid
 flowchart LR
-    A["0. Introduce & verify<br/>plain-language intro;<br/>verify owner identity"] --> B["1. Business profile<br/>owner supplies a source<br/>(website / document) →<br/>extract → confirm findings"]
-    B --> C["2. Capabilities<br/>plain-language menu →<br/>connectors + roles"]
-    C --> D["3. Lock in & learn<br/>confirm the product per capability<br/>(defer if undecided) → learn its<br/>MCP/REST surface — no credentials"]
-    D --> E["4. Working rules<br/>approval gates +<br/>sync topology"]
-    E --> F["5. Draft & review<br/>write + validate config;<br/>owner reviews in full"]
+    A["0. Introduce & verify"] --> B["1. Business profile"]
+    B --> C["2. Capabilities"]
+    C --> D["3. Lock in & learn"]
+    D --> E["4. Working rules"]
+    E --> F["5. Draft & review"]
     F --> G{"6. Approve"}
-    G -->|"approved"| H["Commit config<br/>→ Setup Protocol (§8.4)"]
-    G -->|"rejected / unclear"| D
+    G -->|"approved"| H["Commit → Setup"]
+    G -->|"rejected"| D
 ```
 
-**Bootstrap assumption:** Baxter arrives via an installed skill (§8.1) on an agent harness with one Messaging Channel endpoint live (a simple Telegram bot or even a CLI session suffices) and a writable working directory — Baxter creates the config workspace itself (§8.2). The vault must be reachable for path validation during setup; credentials are added by humans, never collected by Baxter. Everything else is produced by onboarding, not assumed by it.
+**Sources of questions:** the core questionnaire, the Connector Packs' onboarding questions, and the schema as the destination map. Never improvised.
 
-**Sources of questions — never improvised:**
-
-1. **The core questionnaire** (`references/business-questionnaire.md`) — source request + business profile (with confirmation of extracted findings), capability menu, working rules. Identical in every deployment.
-2. **Connector Pack "Onboarding Questions"** — asked per selected connector; skip-logic means only selected connectors' questions are asked. Once a connector is locked, the pack's **Proficiency** section defines what Baxter must learn; the product's own MCP self-description (§8.3) is the live source of truth.
-3. **The schema** (`references/deployment.schema.json`) — every answer must land in a schema field; a question with no destination is out of scope.
-
-**Rules:**
-
-1. **Declaration, not discovery — confirmed extraction.** Nothing enters the config that the owner did not confirm. For the business profile Baxter prefers *sources over questions*: it asks for the business's website or a descriptive document, extracts what it can, and presents its findings for confirmation — scraped facts are proposals until the owner approves them. "Don't know yet" is a valid answer, recorded as an open item — never a guess.
-2. **Plain language.** The owner never sees technical vocabulary; connection standards and store shapes come from Connector Packs and defaults (§5 rule 5), not from the owner.
-3. **Secrets stay out of the conversation.** Baxter asks *where* credentials live (vault path) and instructs the owner in storing them; credential values typed into chat are refused and treated as compromised (§7.4).
-4. **Resumable.** Progress persists as an onboarding draft; an interrupted onboarding resumes, never restarts.
-5. **Self-validated before the gate.** The draft validates against the schema and its semantic rules (S1–S10) and every vault path is checked for existence before the approval gate. A failing draft goes back to questions, never to guessing.
-6. **Full disclosure at the gate.** Stage 6 approval covers the full config, not a summary; the approval gate records *who approved* (§8.2).
-7. **Lock in, then learn — credentials never at onboarding.** An unsettled product choice is deferred as an open item and revisited before approval; nothing is guessed. Once locked, Baxter *learns* the connector — research plus live MCP self-description (§8.3) — and records a Connector Proficiency profile: capabilities, MCP/REST surface, limitations. Onboarding never requests credentials; the config records expected vault paths, and the Setup Protocol verifies them (§7.4).
-
-**Failure behaviour:** rejection returns to the relevant stage with corrections recorded; a constraint that cannot be satisfied by asking stops the protocol; anything outside onboarding's reach (vendor accounts, DNS, hosting) is an open item for the owner or operator — never an agent action.
-
-The full agent-facing procedure lives in `references/onboarding-protocol.md` (identical in every deployment, §8.1).
+**Rules:** declaration not discovery; plain language; secrets out of the conversation; resumable; self-validated before the gate; full disclosure at the gate; lock in then learn.
 
 ---
 
-## 9. Out of Scope
+## 9. Harness Adapters and Conformance
 
-Deliberately excluded (handled separately): vendor and product selection, hosting and infrastructure, pricing, and any business-specific workflow definitions and configuration. **Connector data durability and backups** (CRM, accounting, email marketing, …) are owned by their vendors — the core's backup scope is limited to what the core itself creates.
+A harness is the agent platform a deployment runs on. The blueprint uses eleven **ports**; each harness supplies some natively, some partially, some not at all. Its requirements document (`docs/<harness>-requirements.md`) records the mapping.
 
-**Recognised, deferred until the validation phase:**
+| Port | What it must provide |
+|---|---|
+| Channel | A message surface for the owner and staff |
+| Runtime | An agent loop that can follow the brief and call tools |
+| Instructions | A way to load the skill, brief, or operator runbook |
+| Roles | Isolation between coordinator and specialists, or a declared substitute |
+| Tools | MCP client, REST/OpenAPI actions, or both |
+| Memory | Long-term store or a declared host-native substitute |
+| Scheduling | Flow triggers or routines, if flows are used |
+| Approvals | A way to pause and ask the owner |
+| Files | A workspace or document store |
+| Secrets | Vault, native store, or hybrid |
+| Audit | Run and action records, where available |
 
-- **Observability and audit.** The chosen harness may provide activity logging; a core-owned activity log and error alerting (backup failures, expired credentials, stuck workflows) is a recognised future capability, designed in later once the first deployment proves what is actually needed.
-- **Chat-log retention.** Raw chat content and email content are not retained by the core; quotes, invoices, and business records live in the appropriate connectors. If a deployment later needs conversation retention (e.g., for compliance), it is a per-deployment decision, not a core default.
-- **Staging and pre-release testing.** A test deployment for validating core releases and connector packs before rollout is deferred until there is a viable, functioning product deployment.
-- **Approval timeouts.** What happens when a gate sits unanswered (owner away) — re-alert, escalate, never auto-approve. To be defined once real usage shows what is needed.
-- **Work prioritisation.** How competing agent work is queued and prioritised (urgent operational request vs long creative job). To be defined once concurrency pressure appears.
+**Conformance levels:** `native` (the port works as the blueprint expects), `partial` (a documented workaround exists), `degraded` (the blueprint's guarantee cannot be met; the gap is declared in `deployment.yaml` and the safe fallback is named).
+
+**Assessment loop:** probe the host → grade each port → choose delivery mode → write the requirements doc → run the conformance test (empty workspace, "become Baxter": it must create the workspace, start Stage 0, ask rather than invent, refuse a pasted credential) → record the result.
+
+**Self-configuration is proposable, never self-certified.** When the host lets Baxter create bots or profiles, the creation plan is shown and approved like any other setup step.
+
+---
+
+## 10. Out of Scope
+
+Vendor and product selection, hosting, pricing, and business-specific flow definitions. Connector and provider data durability belongs to the vendor.
+
+**Recognised, deferred:** observability and audit beyond the ledger; chat-log retention; staging deployments; approval timeouts; work prioritisation.

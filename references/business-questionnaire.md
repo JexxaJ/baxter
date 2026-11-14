@@ -1,117 +1,123 @@
 # Core Business Questionnaire
 
-*Status: core artifact. Executed by Baxter during the Onboarding Protocol (`onboarding-protocol.md`); identical in every deployment (§8.1). Covers Stages 0, 1, 2, and 4 — Stage 3 questions live in each Connector Pack ("Onboarding Questions").*
+*Status: blueprint v0.2.1. Executed during onboarding (`onboarding-protocol.md`); identical in every deployment (§8.1). Covers Stages 0, 1, 2 and 4 — Stage 3 questions live in each Connector Pack.*
 
-**How to read this file.** Each question has: an **ID**, the **ask** (plain language, what the owner actually hears), and a **maps to** (the config destination — never shown to the owner, kept here so every answer has a destination per protocol rule 4). Questions marked *(gate-critical)* directly control who can authorize consequential actions.
+**How to read this file.** Each question has an **ID**, the **ask** (what the owner actually hears), and a **maps to** (the config destination). Questions marked *(gate-critical)* control who can authorize consequential actions.
 
 ---
 
-## Stage 0 — Introduce & Verify
-
-Not a questionnaire; a script. Baxter explains, then verifies.
+## Stage 0 — Name & Verify
 
 **Script:**
 
-> "Hello — I'm Baxter. I'm here to set up your business assistant. Over the next few conversations I'll ask about your business, what tools you use, and how you want things approved. At the end you'll see and approve the complete setup before anything happens. Nothing gets configured until you approve it, and I never guess — if I don't know something, I'll ask."
+> "Hello — I'm your new business assistant. Before anything else: what would you like to call me? It can be anything short and easy to say — I'll answer to it from now on. After that I'll ask about you, your business, your services, and how you want things approved. You'll see and approve the whole setup before anything happens."
 
-**Verification:**
+**Naming (N1) — the first question, always.** The owner chooses; Baxter may offer up to three short suggestions but must not decide. Until the owner answers, Baxter refers to itself as "your assistant". Once chosen, the name is used in every message and recorded immediately in `onboarding-draft.md`.
+
+Rules for a valid name: 1–32 characters, letters/numbers/spaces/hyphens/apostrophes; not the name of a current staff member; not an authority title ("Manager", "Director", "Admin"); not an impersonation of a real person or brand. If the owner picks something that breaks a rule, say why and ask again.
 
 | ID | Ask | Maps to |
 |---|---|---|
-| V1 | "Please confirm your full name and your role in the business." *(gate-critical)* | `business-context.md` → People |
-| V2 | "What is the best way to reach you on this channel — your handle/username here?" *(gate-critical)* | `channels.approvers.owner` |
+| N1 | "What would you like to call me?" *(gate-critical — it becomes the deployment identity)* | `deployment.assistant.name`, `.slug` |
+| V1 | "And to be sure I know who I'm talking to — your full name and role?" *(gate-critical)* | `business-context.md` → People |
+| V2 | "What's your handle on this channel?" *(gate-critical)* | `channels.approvers.owner` |
+| V3 | "Your logins will live in [the platform's secure store / your password manager]. Is that all right?" *(gate-critical)* | `secrets.source` |
 
-The V2 answer is the **verified owner identity**; every future approval gate is bound to it (§8.2). Baxter states this explicitly: *"I'll treat this identity as the owner. Approvals for important actions will only be accepted from it."*
+V3 is read from the host's requirements document before asking: the operator may already have decided the secret source. The owner hears a plain-language statement and consents; they are never asked for a credential.
+
+**The name is not a credential.** It changes how the assistant presents itself; it never authorises an action. Approvals stay bound to V2.
 
 ---
 
 ## Stage 1 — Business Profile
 
-**Discover, then confirm.** The owner is not a form-filler — the business's public footprint already holds most of the answers. Baxter first asks for a *source*, extracts what it can, and then **confirms** its findings in plain language. Direct questions (B1–B7) are fallbacks, asked only for fields the sources could not answer.
-
-### 1a. Source request
+**Discover, then confirm.** Prefer sources over questions.
 
 | ID | Ask | Maps to |
 |---|---|---|
-| D1 | "What's your website address? Or, if you have one, send me a document that describes the business — a brochure, an About page, a supplier profile, anything like that." | Extraction source (nothing stored directly) |
+| D1 | "What's your website, or do you have a document that describes the business?" | Extraction source |
+| B1 | "Tell me about the business — what you do." *(if not confirmed)* | `business-context.md` |
+| B2 | "Trading name, and is it the legal name?" *(if not confirmed)* | `business-context.md` |
+| B3 | "Where do you operate?" *(if not confirmed)* | `business-context.md` |
+| B4 | "What are your products or services?" *(if not confirmed)* | `business-context.md` |
+| B5 | "What are your trading hours?" *(if not confirmed)* | `business-context.md` |
+| B6 | "Walk me through a typical job — first contact to getting paid." *(always)* | `business-context.md` |
+| B7 | "Who works here, and what do they do?" *(if not confirmed)* | `business-context.md`; `channels.approvers.staff` |
+| B8 | "Should staff talk to me here? I'll need their handles." *(gate-critical)* | `channels.approvers.staff` |
 
-D1 is optional — "we don't have a website" is fine; Baxter proceeds straight to the direct questions.
-
-### 1b. Extraction
-
-From the supplied source(s), Baxter gathers whatever it can — typically: what the business does, trading name, services/products, service area, trading hours, staff names, contact details. It also notes what the source **did not** say. Extraction output is always a set of **proposals**, never config: web pages go stale, documents go out of date, and a confident scrape is still a guess until confirmed (Constitution: No Guessing).
-
-### 1c. Confirmation
-
-Baxter presents its findings grouped, in plain language, and asks for one confirmation — not a re-interview:
-
-> "From your website I found: you're *Duns Plumbing*, you service the Illawarra region, you do hot water, drainage and renovations, and you're open Monday–Friday 7–5. You list three staff: Sam, Alex and Priya. **Is all of that correct?**"
-
-The owner confirms, corrects, or fills gaps. Only confirmed items enter the draft; corrections are recorded and re-shown in the Stage 5 draft.
-
-### 1d. Direct questions — only for what's still missing
-
-| ID | Ask | Maps to |
-|---|---|---|
-| B1 | "Tell me about the business — what do you do, in a sentence or two?" *(if not confirmed from source)* | `business-context.md` → The business |
-| B2 | "What's the trading name, and is it the same as the legal name?" *(if not confirmed from source)* | `business-context.md` → The business |
-| B3 | "Where do you operate / what's your service area?" *(if not confirmed from source)* | `business-context.md` → The business |
-| B4 | "What are your products or services?" *(if not confirmed from source)* | `business-context.md` → Key facts |
-| B5 | "What are your trading hours?" *(if not confirmed from source)* | `business-context.md` → Key facts |
-| B6 | "Walk me through how a typical job or sale happens — from first contact to getting paid." *(always asked — process detail rarely appears on a website)* | `business-context.md` → Booking and quoting process |
-| B7 | "Who works here, and what do they do? First names are fine." *(if not confirmed from source)* | `business-context.md` → People; staff Messaging Channel users |
-| B8 | "Should staff also talk to me on this channel? If so, I'll need their handles to verify them." *(gate-critical — never scraped)* | `channels.approvers.staff` |
-
-**Scraping boundaries.** Baxter extracts from sources the owner pointed it at — the supplied URL and documents. It does not wander the open web, read reviews, or pull social profiles as fact sources unless the owner offers them. Anything it cannot extract is asked (B1–B7); anything the owner cannot answer becomes an open item (protocol rule 3).
+**Boundaries.** Extract only from sources the owner supplies. Unanswered fields become open items.
 
 ---
 
 ## Stage 2 — Capabilities
 
-Present the menu in business terms — **never** connector names. Owner picks; Baxter maps.
+Present the menu in business terms, never connector names.
 
-| ID | Ask | Selects | Activates (§4.1) |
+| ID | Ask | Selects | Activates |
 |---|---|---|---|
-| C0 | "How should I keep track of your customers, jobs, and history — a job management or CRM tool? (This becomes the single source of truth for customer records.)" | `crm` | `operations` |
-| C1 | "Do you send invoices and manage accounts in dedicated software?" | `accounting` | `operations` |
-| C2 | "Do you send marketing or bulk emails — newsletters, promotions, updates?" | `email-marketing` | `content` |
-| C3 | "Do you post to social media — Facebook, Instagram, Google Business Profile, and so on?" | `social` | `content` |
-| C4 | "Do you have a website with an enquiry or contact form you'd like wired in so leads land automatically?" | `website` | — (feeds Workflow Engine) |
-| C5 | "Should customers be able to chat with an assistant on your website or WhatsApp?" *(gate-critical — creates a customer-facing role)* | `channels.customer_chat` | `customer_engagement` |
+| C0 | "How do you keep track of customers, jobs and history — a CRM or job system?" | `crm` (business) | `operations` |
+| C1 | "Do you invoice and manage accounts in dedicated software?" | `accounting` | `operations` |
+| C2 | "Do you send marketing or bulk email?" | `email-marketing` | `content` |
+| C3 | "Do you post to social media?" | `social` | `content` |
+| C4 | "Do you have a website with an enquiry form?" | `website` | — |
+| C5 | "Should customers chat with an assistant on your site or WhatsApp?" *(gate-critical)* | `channels.customer_chat` | `customer_engagement` |
+| C6 | "Some chores happen over and over — new enquiry to a record, invoice status back to the job. Should I set up background routines for that?" | Automation intent → Stage 4 flows | — |
+| C7 | "Do you already use an automation tool — n8n, Zapier, Make?" *(if C6 yes)* | `connectors[kind: automation]` or open item | — |
 
-**Mandatory follow-up when C0 is skipped:** "I need somewhere to keep customer records — that's the one system I treat as the source of truth. Should I note that you don't have one yet?" → recorded as an open item; the deployment proceeds without a `system_of_record: true` connector only if the owner explicitly confirms.
+C6 does not create flows; it decides whether Stage 4 proposes any. If C7 is "not sure", the provider is deferred: native vendor links and Baxter's own work come first, and a provider can be added later.
 
-**Follow-up for any selected capability:** "Which tool do you use for this today?" — the answer locks the connector. If the owner is unsure or has not settled on a tool: *"No problem — we can leave that one for now and come back to it before we finalise your setup."* The choice is deferred as an open item; it is never guessed. If no suitable tool exists, the same applies — vendor selection is out of scope for onboarding, but the capability stays open until resolved or explicitly dropped by the owner.
+**Follow-up when C0 is skipped:** record "no system of record yet" as an open item; the owner must explicitly accept proceeding without one.
+
+**Follow-up for every selected service:** "Which tool do you use today?" — locks the connector, or defers it as an open item.
+
+---
+
+## Stage 3 — Lock-in happens in the packs
+
+The per-service questions are in each Connector Pack. Two answers are always recorded per locked connector:
+
+- **Agent surface** — how may Baxter talk to it? (`mcp`, `openapi`, `rest`, `none`)
+- **Flow surface** — may a flow call it, and how? (`rest`, `webhook`, `native`, `none`)
+
+Neither is asked in technical terms. Baxter derives them from the pack and the live surface, then confirms the practical outcome: *"I can look up and update contacts, and a routine can create a job when a form is submitted — is that what you expect?"*
 
 ---
 
 ## Stage 4 — Working Rules
 
-After Stage 3. This is where the gates and syncs are decided.
-
-### 4a. Approval gates *(all gate-critical)*
+### 4a. Approval classes *(all gate-critical)*
 
 | ID | Ask | Maps to |
 |---|---|---|
-| W1 | "Some actions are public or permanent — publishing a social post, sending an email campaign, anything customer-visible. Who signs off on those? (Usually: you.)" | `approval_gates.default` |
-| W2 | "If you're away and something is waiting on approval, should I chase you, or hold it until you're back? I will never approve things myself." | Open item → approval-timeout behaviour (deferred §9) |
-| W3 | "When I need to reach you for an approval, what's your preference — immediate message, or a daily summary?" | `business-context.md` → Preferences |
-| W4 | "Your configuration will live on this agent. Should I also back it up to a private git repository you control? If you don't have one, I'll keep it local — but then your agent's own backup must cover it: anyone running a business-critical system is expected to back up their agent's configuration." *(gate-critical — continuity)* | `backup.mode`, `backup.remote` |
+| W1 | "Who signs off on public or permanent actions — posts, campaigns, refunds, deletions?" | `approval_gates.default` |
+| W2 | "What always needs your approval: messages to customers, money, deleting records?" | Per-flow `approval: owner` |
+| W3 | "If you're away, should I chase you or hold work?" | Open item (timeouts deferred) |
+| W4 | "How should I reach you for approvals — immediately, or a daily summary?" | `business-context.md` → Preferences |
+| W5 | "Your configuration lives on this agent. Back it up to a private repository you control?" | `backup.mode`, `backup.remote` |
 
-### 4b. Sync topology — Baxter proposes, owner confirms
+### 4b. Flows — Baxter proposes, owner confirms
 
-Baxter proposes syncs **only** from the selected connectors' declared sync topology (Connector Pack, "Sync Topology" sections) — and it resolves **how** each runs before asking: where a vendor-native integration path exists, it proposes `native` (§5 rule 6); only where none exists does it propose building a Workflow Engine flow (`n8n`). The owner confirms in plain language and never needs to know which mechanism runs underneath:
+Propose only from the selected services' declared sync topology and the C6 answer. Each proposal names its **approval class** before the owner sees it:
 
 | ID | Ask | Maps to |
 |---|---|---|
-| S1 | "When a new customer is added, should they flow into your email lists automatically? I can do this with a background workflow." *(if crm + email-marketing selected)* | `sync_topology: crm → email-marketing, via: n8n` |
-| S2 | "Should invoice/payment status from accounting show up against the job in the CRM? If your tools already do this natively, I'll use their built-in link." *(if crm + accounting selected)* | `sync_topology: accounting → crm, via: native` where the vendors integrate directly; `via: n8n` otherwise |
-| S3 | "Should website enquiries create a contact/job automatically?" *(if website + crm selected)* | `sync_topology: website → crm, via: n8n` |
+| F1 | "When a new customer is added, should they appear in your email list?" *(crm + email)* | `flows[]`, `approval: none` |
+| F2 | "Should invoice status show against the job automatically?" *(crm + accounting)* | `flows[]`, `approval: none`; native if vendors integrate |
+| F3 | "Should a website enquiry create a contact or job?" *(website + crm)* | `flows[]`, `approval: none` |
+| F4 | "Before anything is posted or sent to customers, should it wait for you?" *(if social/email + content)* | `flows[]`, `approval: owner` |
 
-Each proposed sync is presented as *"When X happens, Y will follow — yes/no?"*. Rejected syncs are simply not declared; undeclared syncs are never configured (§8.5 rule 4). A capability whose sync the owner declines is recorded as explicitly declined — a visible decision, not a silent gap (S15).
+Each proposal is phrased as *"When X happens, Y will follow — yes or no?"*. Declined flows are recorded as declined (S15). A flow needing a provider the business does not have is deferred with the provider.
+
+### 4c. Closing
+
+> "That's everything. Next I'll write the full configuration and show it to you for approval — nothing gets set up until you approve it."
 
 ---
 
-## Closing
+## What onboarding never asks
 
-Baxter closes Stage 4 with: *"That's everything I need. Next I'll write up the full configuration and show it to you for approval — nothing gets set up until you approve it."* → Stage 5 (`onboarding-protocol.md` §3).
+- A credential value, in any form.
+- Which MCP/REST standard to use.
+- Which memory store or database.
+- Which pack version.
+- Whether to install a provider before a flow needs one.

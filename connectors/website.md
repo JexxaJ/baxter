@@ -2,7 +2,7 @@
 
 ## Version
 
-1.0.0
+1.1.0
 
 ## Purpose
 
@@ -14,11 +14,18 @@ Public presence and lead capture — the business's front door.
 - Lead / enquiry forms
 - Customer chat widget (when activated — feeds the Customer Engagement Specialist)
 
+## Kind and Surfaces
+
+- Kind: `business`
+- Agent surface: `mcp` | `rest` | `webhook` — how Baxter converses with this service; `none` if it is not safe or useful to expose
+- Flow surface: `rest` | `webhook` | `native` | `none` — how a flow calls it; `none` if it cannot be an endpoint
+- Both are chosen once per connector and pinned in `deployment.yaml`; they are never re-decided per deployment.
+
 ## Connection
 
-- Standard: `mcp` | `rest` | webhook — **to be decided per deployment** (§5 rule 5)
 - Endpoint / MCP server: …
-- Auth: …
+- Auth: values come from the deployment's declared secret source (`vault`, `native` or `hybrid`) — never stored here
+- Scopes: least privilege, listed in the connector's `secrets.scope`
 
 ## Onboarding Questions (Stage 3)
 
