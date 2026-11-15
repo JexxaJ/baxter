@@ -1,120 +1,83 @@
 # OpenMausBot — Onboarding Runbook
 
-*Day-of guide for bringing up the blueprint on OpenMausBot. The assessment and port mapping live in `openmausbot-requirements.md`; this file is the operator checklist and the bootstrap prompt.*
+*The short version: create a bot, change two settings, give it one line, and let it read the blueprint itself. The assessment lives in `openmausbot-requirements.md`.*
 
-## 1. Before you start
+## 1. Create the bot
 
-- Install OpenMausBot (desktop app, `npx openmausbot`, or a self-hosted server) on the machine that will run the business.
-- Choose an engine: **Claude Code or Codex** for an assistant that can use tools. An API-key engine is chat-only.
-- Have a git host ready for the private workspace if you want off-host backup.
+New bot → name it what the owner wants to call the assistant. That name is the deployment identity; rename later if the owner changes their mind.
 
-## 2. Create the assistant bot
+Leave its apps empty for now.
 
-1. **New bot.** Name it what the owner wants to call it — the platform requires a name at creation, and that name is the deployment identity. If the owner changes their mind later, rename the bot and update `deployment.assistant`.
-2. Give it a short job description: "Business assistant and coordinator for <business>."
-3. Leave its connected apps empty for now. They are added after onboarding selects them.
-
-## 3. Settings that must change before onboarding
+## 2. Change two settings
 
 | Setting | Set to | Why |
 |---|---|---|
-| Approval level | **Ask for approval** (or Approve for me) | The default is Full access, which bypasses the blueprint's gates |
-| Sending on your behalf | **Ask every time** | Public/customer-visible sends must pause |
-| Memory | On | `MEMORY.md` is the bot's working memory |
-| Project folder | The repo checkout, or the workspace parent | File tools run there |
+| Approval level | **Ask for approval** | Default is Full access, which skips the gates |
+| Sending on your behalf | **Ask every time** | Public/customer sends must pause |
 
-Do not expose the loopback server port. Local calls count as the owner.
+## 3. Give it one line
 
-## 4. Put the brief in the bot
-
-Paste `references/brief.md` into the bot's **`SOUL.md` / standing instructions**. This is the carrier for `delivery: brief`.
-
-Then make the blueprint reachable. Two routes, same prompt:
-
-- **URL route (default)** — nothing to install. The prompt below points at `raw.githubusercontent.com`, so the bot fetches the files itself.
-- **Local route** — clone the repo onto the bot's computer and point at the paths instead:
+Put this in the bot's **`SOUL.md` / standing instructions**:
 
 ```text
-~/baxter-skill/       # git clone https://github.com/JexxaJ/baxter
-~/baxter-workspace/   # empty git repo for this deployment
+You are the business assistant. Read https://github.com/JexxaJ/baxter and follow START.md.
 ```
 
-If the bot can neither fetch a URL nor see a filesystem, paste the brief and hand over the documents stage by stage.
-
-## 5. Bootstrap prompt
-
-Paste this into the bot's chat. Replace `<name>` and the workspace path.
+Then send it one message:
 
 ```text
-You are <name>, the business assistant defined by the Baxter blueprint.
-
-Read these files in order and follow them exactly:
-1. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/brief.md
-2. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/constitution.md
-3. https://raw.githubusercontent.com/JexxaJ/baxter/master/docs/openmausbot-requirements.md
-4. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/onboarding-protocol.md
-5. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/business-questionnaire.md
-6. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/deployment.schema.json
-
-Your workspace is <workspace-path>; create it as a git repository if it does not exist.
-Confirm your name with me at the start; if I want a different one, use it and record it in
-the onboarding draft. Never treat your name as a credential.
-
-Then begin Stage 0 of onboarding and work through to Stage 6 using the protocol and
-questionnaire above. One to three questions at a time, in plain language. Never ask for
-or accept a credential value; logins live in OpenMausBot's own secret store or the
-connected-app card. Do not add a service, app or automation provider that is not in
-the config.
-
-If a file cannot be read, stop and ask for it — never reconstruct it from memory.
-
-When onboarding is approved, ask for setup-protocol.md and the connector packs for the
-services I selected, then run setup.
+Start.
 ```
 
-For the local route, replace the six URLs with `~/baxter-skill/…` paths and clone the repo once:
+That is the whole setup. The bot clones the repository, reads `START.md`, asks what to call you, and runs onboarding from there. No links to dig out, no files to paste.
 
-```bash
-git clone https://github.com/JexxaJ/baxter ~/baxter-skill
-git init ~/baxter-workspace
+## 4. What the bot does next
+
+`START.md` tells it to read the brief, constitution, host document, onboarding protocol, questionnaire and schema, then:
+
+1. ask/confirm its name;
+2. verify you and where logins live;
+3. run Stages 0–6, one to three questions at a time;
+4. write a schema-valid config and show it in full;
+5. commit the workspace;
+6. run setup and verify each service and flow.
+
+It keeps the workspace at `baxter-workspace/` on its own computer. If it can't clone the repo, it will ask you for the files rather than invent them.
+
+## 5. If it can't reach GitHub
+
+Put a copy of the repo on the bot's computer (project folder or workspace), then use:
+
+```text
+You are the business assistant. Read START.md in ~/baxter-skill and follow it.
 ```
 
-## 6. Stage handovers
+Only needed when the bot has no network access or no terminal.
 
-| Stage | What the operator does |
-|---|---|
-| 0 | Confirms the owner's name and handle; states where logins live |
-| 1 | Supplies the website or a document |
-| 2 | Answers the capability menu; no apps connected yet |
-| 3 | Locks products; confirms each service's agent and flow surfaces |
-| 4 | Approves gates and flows; sets `Sending on your behalf` |
-| 5 | Reads the full draft; the bot validates it |
-| 6 | Approves; the bot commits the workspace |
-| Setup | Connects apps one bot at a time; adds MCP servers; attaches n8n only if a flow needs it |
+## 6. What to watch
 
-## 7. Connecting services safely
+- It asks for its name before explaining itself.
+- It refuses a pasted credential.
+- It asks "which CRM?" instead of assuming.
+- It says "I need the schema/file" rather than inventing fields.
+- Its draft appears in `baxter-workspace/`, not only in chat.
 
-- Connect apps **per bot**, not account-wide by habit. The coordinator gets what it needs to converse; the operations bot gets CRM/accounting; the content bot gets email/social.
-- MCP servers: add remote (Streamable HTTP/SSE) or stdio; test the connection before enabling it for a bot.
-- Never store a credential in the workspace, a flow spec or chat. Use the platform's card/settings.
+If any of those fail, the bot is improvising: stop it and point it back at `START.md`.
+
+## 7. Connecting services
+
+After onboarding selects them, connect apps **per bot**: coordinator gets what it needs to converse; operations gets CRM/accounting; content gets email/social. Add MCP servers one at a time and test the connection before enabling.
 
 ## 8. Routines are not flows
 
-OpenMausBot routines run the **bot** on a schedule or webhook. That is judgment work, not a deterministic flow. For a real flow (contact sync, invoice status), connect an external n8n and record it as the `automation` connector. Do not label a routine as a flow.
+A routine runs the bot on a schedule or webhook — that's judgment work. A deterministic flow (contact sync, invoice status) needs an external n8n recorded as the `automation` connector.
 
-## 9. Verification
+## 9. Verify
 
-Run the conformance checks in `openmausbot-requirements.md` §12:
-
-- name confirmed, workspace created;
-- pasted credential refused;
-- unenrolled service refused;
-- a public send pauses;
-- a provisional flow appears in the ledger;
-- stopping the bot pauses routines.
+Run the checks in `openmausbot-requirements.md` §12: name confirmed and workspace created; pasted credential refused; unenrolled service refused; public send pauses; provisional flow appears in the ledger; stopping the bot pauses routines.
 
 ## 10. Ongoing
 
-- Re-run the checks after every OpenMausBot upgrade.
-- Keep the workspace committed; a deleted bot takes its schedules and webhooks with it.
-- Re-paste the brief when `VERSION` changes, since `SOUL.md` holds a copy.
+- Re-paste the `SOUL.md` line if the bot's instructions are reset; the repo carries the content.
+- Re-run the checks after each OpenMausBot upgrade.
+- Keep the workspace committed; deleting the bot deletes its schedules and webhooks.

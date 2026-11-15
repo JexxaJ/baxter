@@ -32,6 +32,7 @@ A deployment may have **zero** automation providers and zero flows; providers ar
 
 | Path | What it holds |
 |---|---|
+| `START.md` | Agent-facing entry point: clone, read the blueprint, run onboarding |
 | `SKILL.md` | Bootstrap entry point — identity, state machine, workspace rules, guardrails |
 | `references/brief.md` | Portable short form of the constitution, for hosts without a skill loader |
 | `references/constitution.md` | The immutable behaviour of Baxter |

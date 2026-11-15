@@ -40,7 +40,7 @@
 
 - **brief** — put `references/brief.md` in the bot's `SOUL.md` / standing instructions, and keep this repo on the bot's computer so it can read the protocols by path.
 - Skills: only `SKILL.md` text travels; `references/` and `connectors/` do not. A skill import is therefore not a substitute for the files — use the filesystem.
-- Bootstrap: create the bot **named by the owner** (the platform requires a name at creation), put the brief in `SOUL.md`, set the project folder to the repo/workspace, then paste the prompt in §11.
+- Bootstrap: create the bot **named by the owner** (the platform requires a name at creation), put the one-line start in `SOUL.md` ("Read https://github.com/JexxaJ/baxter and follow START.md"), then send *Start.* It clones the repo and runs onboarding itself. Details: `openmausbot-onboarding.md`.
 
 ## 5. Secrets
 

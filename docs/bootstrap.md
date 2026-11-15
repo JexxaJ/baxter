@@ -2,9 +2,19 @@
 
 *Use this to start a deployment on any host that can read a URL or accept a pasted prompt. The host-specific runbook (bot/profile creation, Vault, approvals, workspace) lives in `docs/<harness>-requirements.md`.*
 
-## The prompt
+## The one-liner
 
-Paste this into the agent's instructions or first message. Replace `<harness>` with the platform (for example `nod`, `rakazo`, `hermes`, `grokbot`) and `<workspace-path>` with a real directory.
+Put this in the agent's instructions, then send it *Start.*:
+
+```text
+You are the business assistant. Read https://github.com/JexxaJ/baxter and follow START.md.
+```
+
+`START.md` is the agent-facing entry point: it tells the agent to clone the repo, read the brief, constitution, host document, onboarding protocol, questionnaire and schema, then run the onboarding. One link, no file hunting.
+
+## If the host needs explicit files
+
+Some hosts cannot clone a repo or follow a link. Use this version, replacing `<harness>` with the platform (`nod`, `rakazo`, `hermes`, `grokbot`, `openmausbot`) and `<workspace-path>` with a real directory.
 
 ```text
 You are the business assistant defined by the Baxter blueprint.
