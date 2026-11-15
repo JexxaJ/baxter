@@ -29,31 +29,34 @@ Do not expose the loopback server port. Local calls count as the owner.
 
 Paste `references/brief.md` into the bot's **`SOUL.md` / standing instructions**. This is the carrier for `delivery: brief`.
 
-Then put the blueprint on the bot's computer:
+Then make the blueprint reachable. Two routes, same prompt:
+
+- **URL route (default)** — nothing to install. The prompt below points at `raw.githubusercontent.com`, so the bot fetches the files itself.
+- **Local route** — clone the repo onto the bot's computer and point at the paths instead:
 
 ```text
-~/baxter-skill/       # git clone of JexxaJ/baxter (read-only in practice)
+~/baxter-skill/       # git clone https://github.com/JexxaJ/baxter
 ~/baxter-workspace/   # empty git repo for this deployment
 ```
 
-If the bot cannot see a filesystem, paste the brief only and hand over documents stage by stage.
+If the bot can neither fetch a URL nor see a filesystem, paste the brief and hand over the documents stage by stage.
 
 ## 5. Bootstrap prompt
 
-Paste this into the bot's chat to start. Replace `<name>` and the paths.
+Paste this into the bot's chat. Replace `<name>` and the workspace path.
 
 ```text
 You are <name>, the business assistant defined by the Baxter blueprint.
 
 Read these files in order and follow them exactly:
-1. ~/baxter-skill/references/brief.md
-2. ~/baxter-skill/references/constitution.md
-3. ~/baxter-skill/docs/openmausbot-requirements.md
-4. ~/baxter-skill/references/onboarding-protocol.md
-5. ~/baxter-skill/references/business-questionnaire.md
-6. ~/baxter-skill/references/deployment.schema.json
+1. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/brief.md
+2. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/constitution.md
+3. https://raw.githubusercontent.com/JexxaJ/baxter/master/docs/openmausbot-requirements.md
+4. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/onboarding-protocol.md
+5. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/business-questionnaire.md
+6. https://raw.githubusercontent.com/JexxaJ/baxter/master/references/deployment.schema.json
 
-Your workspace is ~/baxter-workspace; create it as a git repository if it does not exist.
+Your workspace is <workspace-path>; create it as a git repository if it does not exist.
 Confirm your name with me at the start; if I want a different one, use it and record it in
 the onboarding draft. Never treat your name as a credential.
 
@@ -67,6 +70,13 @@ If a file cannot be read, stop and ask for it — never reconstruct it from memo
 
 When onboarding is approved, ask for setup-protocol.md and the connector packs for the
 services I selected, then run setup.
+```
+
+For the local route, replace the six URLs with `~/baxter-skill/…` paths and clone the repo once:
+
+```bash
+git clone https://github.com/JexxaJ/baxter ~/baxter-skill
+git init ~/baxter-workspace
 ```
 
 ## 6. Stage handovers
