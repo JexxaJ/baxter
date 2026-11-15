@@ -1,13 +1,13 @@
 # Rakazo — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.2. Paper assessment from product documentation; verify the conformance test at first install. Rakazo is a bot platform with its own computer, routines, memory and app brokers, and imports agents from other platforms.*
+*Assessment for the Baxter blueprint v0.2.3. Paper assessment from product documentation; verify the conformance test at first install. Rakazo is a bot platform with its own computer, routines, memory and app brokers, and imports agents from other platforms.*
 
 ## 1. Identity
 
 - Product: Rakazo (rakazo.com), open source, Apache-2.0
 - Hosting: self-hosted via Docker (Postgres + worker + app) or hosted cloud (beta)
 - Docs: rakazo.com/docs, github.com/elie222/rakazo
-- Assessed: blueprint 0.2.2
+- Assessed: blueprint 0.2.3
 
 ## 2. Topology
 
@@ -32,6 +32,8 @@
 | Files | native | Persistent Debian home with git, node, python3, sqlite3; shared computer | Filesystem exists on the host |
 | Secrets | native | Encrypted connector credentials on the server; env for server secrets | No first-class external vault; `hybrid` only for core keys |
 | Audit | partial | Audit log present | Export/retention to verify |
+
+**Channel options:** native web/desktop/mobile app; external Slack, WhatsApp, Telegram, iMessage/SMS — some channels are self-host only.
 
 **Verdict:** full host with `delivery: skill` (brief fallback). Declare `memory` degraded for portability, `roles` partial, and name the bot-instruction limits.
 

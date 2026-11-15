@@ -1,6 +1,6 @@
 # Core Setup Protocol
 
-*Status: blueprint v0.2.2. Authoritative in `references/framework.md` §8.4; identical in every deployment (§8.1). Consumes the Deployment Config produced by onboarding and performs the **doing**: host adapter, connections, flows, verification.*
+*Status: blueprint v0.2.3. Authoritative in `references/framework.md` §8.4; identical in every deployment (§8.1). Consumes the Deployment Config produced by onboarding and performs the **doing**: host adapter, connections, flows, verification.*
 
 ## 1. Purpose and Division of Labour
 
@@ -41,11 +41,11 @@ Baxter guides; it never receives.
 
 | Step | Baxter does | Human does | Output |
 |---|---|---|---|
-| **1. Enumerate** | Validates the config (schema v2 + S1–S19), including the owner-chosen assistant name and slug; reads the host requirements; confirms the secret source; confirms provider capabilities against every gated flow; probes the host's ports | — | Validated contract, or halt with questions |
+| **1. Enumerate** | Validates the config (schema v2 + S1–S20), including the owner-chosen name, the channel endpoints and their support on this host; reads the host requirements; confirms the secret source; confirms provider capabilities against every gated flow; probes the host's ports | — | Validated contract, or halt with questions |
 | **2. Learn** | Loads each pack; enumerates the agent surface and flow surface of every connector; queries the provider's MCP/API for its real capabilities; reconciles profiles | — | Confirmed capability map per connector |
 | **3. Plan** | Writes the plan: host adapter settings, per-connector setup, provider install *(if any)*, flow specs and compilation, memory namespaces, channel enrollment, degraded ports, backup | — | Written plan |
 | **4. Approve** | Presents the plan in plain language, including what cannot be done on this host | **Approves or rejects** | Approved plan |
-| **5. Apply** | Credentials (§2a) → connections → provider install *(only if the plan has one)* → flows authored/recorded → memory namespaces → **channel bot and specialist bots named with the chosen identity** → backup remote → host settings recorded | Adds credentials to the declared store when prompted | Configured system |
+| **5. Apply** | Credentials (§2a) → connections → provider install *(only if the plan has one)* → flows authored/recorded → memory namespaces → **channel endpoints configured and named with the chosen identity** (native app, or external handles/workspace) → backup remote → host settings recorded | Adds credentials to the declared store when prompted | Configured system |
 | **6. Verify** | Smoke-tests each surface (pull a record, push a record); runs each declared flow end-to-end (native path or provider run) and confirms the effect **and** the ledger entry; confirms a gated flow actually pauses | — | Verified evidence, or failure → stop |
 | **7. Document** | Writes the applied state back: config revisions, assistant name and channel handles, flow ids and run ids, proficiency notes, degraded ports, provider capability notes | — | Versioned, re-appliable record |
 

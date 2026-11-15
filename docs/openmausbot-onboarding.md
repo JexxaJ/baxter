@@ -8,6 +8,8 @@ New bot → name it what the owner wants to call the assistant. That name is the
 
 Leave its apps empty for now.
 
+The channel is OpenMausBot's own app, browser or paired phone — it has no Telegram/Slack/WhatsApp ingress. Onboarding will record that as a native endpoint.
+
 ## 2. Change two settings
 
 | Setting | Set to | Why |

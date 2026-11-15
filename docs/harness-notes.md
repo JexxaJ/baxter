@@ -15,6 +15,8 @@
 
 Template for a new platform: [`harness-requirements-template.md`](harness-requirements-template.md).
 
+The blueprint picture is [`architecture.html`](architecture.html); its source spec is [`architecture.spec.json`](architecture.spec.json).
+
 ## How to assess a new harness
 
 1. Read the template and probe the platform against the eleven ports.

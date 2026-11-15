@@ -1,6 +1,6 @@
 # Hermes — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.2. Paper assessment from product documentation and existing operator notes; the conformance test in §12 is run at first install and its results recorded here.*
+*Assessment for the Baxter blueprint v0.2.3. Paper assessment from product documentation and existing operator notes; the conformance test in §12 is run at first install and its results recorded here.*
 
 ## 1. Identity
 
@@ -8,7 +8,7 @@
 - Hosting: self-hosted (VPS or local); hosted variant exists
 - Licence: open source
 - Docs: hermes-agent.nousresearch.com
-- Assessed: blueprint 0.2.2
+- Assessed: blueprint 0.2.3
 
 ## 2. Topology
 
@@ -31,6 +31,8 @@
 | Files | native | Host filesystem | Git workspace works |
 | Secrets | partial | Profile env/config | External vault needs a plugin/service; native by default |
 | Audit | degraded | Logs only | Core run ledger compensates |
+
+**Channel options:** native Web UI; Telegram is first-class. Slack/WhatsApp only through a plugin or MCP bridge — verify before promising them.
 
 **Verdict:** full host. `delivery: skill`. Declare `memory` (if host-native) and `audit` as degraded.
 

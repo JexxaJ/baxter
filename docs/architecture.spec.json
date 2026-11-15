@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Baxter blueprint — talk to anything, flow through a provider",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": ".archify/architecture-blueprint-20261115-123838/baxter-blueprint.html",
+    "views": [
+      {
+        "id": "converse",
+        "label": "Converse",
+        "focus": [
+          "baxter",
+          "website",
+          "crm",
+          "email",
+          "social",
+          "accounting"
+        ],
+        "note": "The assistant holds a tool connection to every enrolled service."
+      },
+      {
+        "id": "flow",
+        "label": "Flows",
+        "focus": [
+          "n8n",
+          "website",
+          "crm",
+          "email",
+          "social",
+          "accounting"
+        ],
+        "note": "A provider builds the flow; afterwards services talk directly."
+      },
+      {
+        "id": "results",
+        "label": "Results",
+        "focus": [
+          "baxter",
+          "n8n",
+          "ledger",
+          "secrets"
+        ],
+        "note": "One run record per flow; the assistant checks the provider first."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "owner",
+      "type": "external",
+      "label": "Owner & staff",
+      "sublabel": "business people",
+      "pos": [
+        20,
+        190
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "channel",
+      "type": "frontend",
+      "label": "Messaging Channel",
+      "sublabel": "native or external",
+      "pos": [
+        180,
+        190
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "adapter",
+      "type": "cloud",
+      "label": "Runtime adapter",
+      "sublabel": "Hermes · Rakazo · Grok Bot · Nod · OpenMausBot",
+      "tag": "per platform",
+      "pos": [
+        360,
+        26
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "baxter",
+      "type": "backend",
+      "label": "Assistant",
+      "sublabel": "judgment · gates · routing",
+      "tag": "owner-named",
+      "pos": [
+        380,
+        178
+      ],
+      "size": [
+        200,
+        96
+      ]
+    },
+    {
+      "id": "ledger",
+      "type": "database",
+      "label": "Run ledger",
+      "sublabel": "flow → run → result",
+      "pos": [
+        650,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "secrets",
+      "type": "security",
+      "label": "Secrets broker",
+      "sublabel": "vault · native · hybrid",
+      "pos": [
+        650,
+        254
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "website",
+      "type": "external",
+      "label": "Website",
+      "sublabel": "lead forms",
+      "pos": [
+        150,
+        490
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "crm",
+      "type": "external",
+      "label": "CRM",
+      "sublabel": "customers · jobs",
+      "tag": "system of record",
+      "pos": [
+        350,
+        490
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "email",
+      "type": "external",
+      "label": "Email marketing",
+      "sublabel": "campaigns · sends",
+      "pos": [
+        640,
+        490
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "social",
+      "type": "external",
+      "label": "Social",
+      "sublabel": "scheduled posts",
+      "pos": [
+        840,
+        490
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "accounting",
+      "type": "external",
+      "label": "Accounting",
+      "sublabel": "invoices · payments",
+      "pos": [
+        1040,
+        490
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "n8n",
+      "type": "backend",
+      "label": "Automation provider",
+      "sublabel": "n8n · Zapier · routines",
+      "tag": "optional",
+      "pos": [
+        490,
+        690
+      ],
+      "size": [
+        180,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Core · identical on every harness",
+      "wraps": [
+        "channel",
+        "baxter",
+        "ledger",
+        "secrets"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "owner-to-channel",
+      "from": "owner",
+      "to": "channel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "channel-to-baxter",
+      "from": "channel",
+      "to": "baxter"
+    },
+    {
+      "id": "adapter-to-baxter",
+      "from": "adapter",
+      "to": "baxter"
+    },
+    {
+      "id": "baxter-to-ledger",
+      "from": "baxter",
+      "to": "ledger",
+      "label": "runs"
+    },
+    {
+      "id": "baxter-to-secrets",
+      "from": "baxter",
+      "to": "secrets",
+      "label": "grants"
+    },
+    {
+      "id": "baxter-to-n8n",
+      "from": "baxter",
+      "to": "n8n",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "author · inspect"
+    },
+    {
+      "id": "n8n-to-baxter",
+      "from": "n8n",
+      "to": "baxter",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "label": "results"
+    },
+    {
+      "id": "baxter-to-website",
+      "from": "baxter",
+      "to": "website",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "baxter-to-crm",
+      "from": "baxter",
+      "to": "crm",
+      "fromSide": "bottom",
+      "label": "asks · acts"
+    },
+    {
+      "id": "baxter-to-email",
+      "from": "baxter",
+      "to": "email",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "baxter-to-social",
+      "from": "baxter",
+      "to": "social",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "baxter-to-accounting",
+      "from": "baxter",
+      "to": "accounting",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "n8n-to-website",
+      "from": "n8n",
+      "to": "website",
+      "variant": "dashed"
+    },
+    {
+      "id": "n8n-to-crm",
+      "from": "n8n",
+      "to": "crm",
+      "variant": "dashed"
+    },
+    {
+      "id": "n8n-to-email",
+      "from": "n8n",
+      "to": "email",
+      "variant": "dashed",
+      "label": "flow"
+    },
+    {
+      "id": "n8n-to-social",
+      "from": "n8n",
+      "to": "social",
+      "variant": "security",
+      "label": "publish after approval"
+    },
+    {
+      "id": "n8n-to-accounting",
+      "from": "n8n",
+      "to": "accounting",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two ways to act",
+      "items": [
+        "Conversation: the assistant calls a service for one-off asks, lookups and judgment",
+        "Flow: a durable route between services that runs without the assistant in the loop",
+        "Choose by repetition and determinism, not by which one is possible"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Identity",
+      "items": [
+        "The owner names the assistant at Stage 0; that name is used on every surface",
+        "Baxter is only the blueprint's codename",
+        "The name is a display identity, never a credential"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Channels",
+      "items": [
+        "Native endpoints come from the host: desktop app, browser, phone",
+        "External endpoints are enrolled messaging services: Telegram, Slack, WhatsApp, SMS",
+        "At least one must reach the owner; setup sends a test message on each"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Automation is optional",
+      "items": [
+        "n8n, Zapier, Make or host routines are one connector kind, added when a flow needs one",
+        "A deployment may have zero providers and zero flows",
+        "Flow specs live in the workspace so a provider can be swapped without re-interviewing"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Results, one place",
+      "items": [
+        "Every flow gets a run id; the ledger maps flow → run → output",
+        "Check the provider first; poll a service only when the flow is native or silent",
+        "A provisional flow carries an expiry until the owner promotes it"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Where the gate bites",
+      "items": [
+        "Public, financial and destructive actions pause for the owner",
+        "A provider that cannot pause never holds that action's credential",
+        "Agent scopes and flow scopes are separate grants from the same source"
+      ]
+    }
+  ]
+}

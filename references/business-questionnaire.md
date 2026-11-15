@@ -1,6 +1,6 @@
 # Core Business Questionnaire
 
-*Status: blueprint v0.2.2. Executed during onboarding (`onboarding-protocol.md`); identical in every deployment (§8.1). Covers Stages 0, 1, 2 and 4 — Stage 3 questions live in each Connector Pack.*
+*Status: blueprint v0.2.3. Executed during onboarding (`onboarding-protocol.md`); identical in every deployment (§8.1). Covers Stages 0, 1, 2 and 4 — Stage 3 questions live in each Connector Pack.*
 
 **How to read this file.** Each question has an **ID**, the **ask** (what the owner actually hears), and a **maps to** (the config destination). Questions marked *(gate-critical)* control who can authorize consequential actions.
 
@@ -22,10 +22,13 @@ Rules for a valid name: 1–32 characters, letters/numbers/spaces/hyphens/apostr
 | V1 | "And to be sure I know who I'm talking to — your full name and role?" *(gate-critical)* | `business-context.md` → People |
 | V2 | "What's your handle on this channel?" *(gate-critical)* | `channels.approvers.owner` |
 | V3 | "Your logins will live in [the platform's secure store / your password manager]. Is that all right?" *(gate-critical)* | `secrets.source` |
+| V4 | "Where would you like to talk to me — this app, or something you already use like Telegram, Slack or WhatsApp?" *(gate-critical — it decides where approvals arrive)* | `channels.endpoints`, `channels.messaging` |
 
 V3 is read from the host's requirements document before asking: the operator may already have decided the secret source. The owner hears a plain-language statement and consents; they are never asked for a credential.
 
 **The name is not a credential.** It changes how the assistant presents itself; it never authorises an action. Approvals stay bound to V2.
+
+**Channels.** Offer only what the host's requirements document supports: a native app/web/phone channel where one exists, plus any external services it lists. "This app" is always acceptable; Telegram, Slack and WhatsApp are acceptable only if the host supports them. Record one endpoint per channel with its kind (`native` or `external`), provider and audience. An external endpoint needs an address (handle, workspace or number). At least one endpoint must reach the owner.
 
 ---
 
@@ -43,7 +46,7 @@ V3 is read from the host's requirements document before asking: the operator may
 | B5 | "What are your trading hours?" *(if not confirmed)* | `business-context.md` |
 | B6 | "Walk me through a typical job — first contact to getting paid." *(always)* | `business-context.md` |
 | B7 | "Who works here, and what do they do?" *(if not confirmed)* | `business-context.md`; `channels.approvers.staff` |
-| B8 | "Should staff talk to me here? I'll need their handles." *(gate-critical)* | `channels.approvers.staff` |
+| B8 | "Should staff talk to me here? I'll need their handles." *(gate-critical)* | `channels.approvers.staff`; `channels.endpoints` (audience: staff) |
 
 **Boundaries.** Extract only from sources the owner supplies. Unanswered fields become open items.
 

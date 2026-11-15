@@ -1,6 +1,6 @@
 # OpenMausBot — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.2. Desk assessment from the repository (`milind-soni/OpenMausBot`, commit `8471a36`, Apache-2.0); run the conformance test at first install and record the result here.*
+*Assessment for the Baxter blueprint v0.2.3. Desk assessment from the repository (`milind-soni/OpenMausBot`, commit `8471a36`, Apache-2.0); run the conformance test at first install and record the result here.*
 
 ## 1. Identity
 
@@ -8,7 +8,7 @@
 - Hosting: local desktop (macOS/Windows/Linux), self-hosted server, or team cloud
 - Engines: Claude Code / Codex / Grok CLIs, other CLIs, or API engines; **agent tools require a CLI engine** — API-key connections are chat-only
 - State: `~/.openmausbot` (SQLite, transcripts, keys, workspaces)
-- Assessed: blueprint v0.2.2
+- Assessed: blueprint v0.2.3
 
 ## 2. Topology
 
@@ -33,6 +33,8 @@
 | Files | native | Bot workspace `~/.openmausbot/workspaces/<botId>/`, project folders, cloud/Local VM computers | Git works |
 | Secrets | partial | Local `~/.openmausbot` store; provider CLI logins; Composio OAuth; MCP headers in plaintext | No external vault; per-bot app scoping is the control |
 | Audit | partial | SQLite job runtime, transcripts, approval journal | No structured export known; the workspace ledger complements it |
+
+**Channel options:** native desktop app, browser and paired phone only. No external Telegram/Slack/WhatsApp ingress — the app *is* the channel.
 
 **Verdict:** full host with `delivery: brief`. Declare `instructions`, `memory` and `secrets` degraded. Strongest approvals; weakest portable memory.
 

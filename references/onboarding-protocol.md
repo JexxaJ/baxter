@@ -1,6 +1,6 @@
 # Core Onboarding Protocol
 
-*Status: blueprint v0.2.2. Authoritative in `references/framework.md` §8.6; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). Onboarding runs **before** Setup (§8.4) and produces the Deployment Config (§8.2) that setup consumes.*
+*Status: blueprint v0.2.3. Authoritative in `references/framework.md` §8.6; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). Onboarding runs **before** Setup (§8.4) and produces the Deployment Config (§8.2) that setup consumes.*
 
 ## 1. Purpose
 
@@ -63,14 +63,15 @@ The owner never sees technical vocabulary: `mcp`/`rest`, provider names, store s
 8. **Skip-logic is declared.** Unselected capabilities skip their questions; inactive roles are `active: false`.
 9. **Lock in, then learn — credentials never at onboarding.** A deferred product is an open item. Once locked, learn the product and record both surfaces.
 10. **Automation is optional.** Do not push a provider on a business that does not need one. A deployment with no provider is complete.
-11. **The assistant is named, not self-named.** The owner chooses the name; Baxter may offer up to three suggestions. The name is 1–32 characters, is not a staff member's name, and is not an authority title. It is recorded in the draft immediately, used for the rest of the conversation, and committed in `deployment.assistant` at Stage 6. It never becomes a credential.
+11. **The channel is a choice, not an assumption.** Offer only endpoints the host's requirements document supports: its native app/web/phone channel where it has one, plus listed external services (Telegram, Slack, WhatsApp, SMS). Record each as an endpoint with kind, provider and audience; an external endpoint needs an address. At least one must reach the owner. Setup sends a real test message on each.
+12. **The assistant is named, not self-named.** The owner chooses the name; Baxter may offer up to three suggestions. The name is 1–32 characters, is not a staff member's name, and is not an authority title. It is recorded in the draft immediately, used for the rest of the conversation, and committed in `deployment.assistant` at Stage 6. It never becomes a credential.
 
 ## 6. Validation — Before the Gate
 
 A draft that fails any check does not reach the approval gate:
 
 - **Schema** (`schema_version: 2`) — structure, including `deployment.assistant`, `harness`, `secrets`, `connectors[].surfaces` and `flows`.
-- **Semantics S1–S19** — one system of record; scopes and flows reference declared connectors; gates map to enrolled approvers; secrets references match their source; retention ordering; no secret values; provider capabilities cover every gated flow; native precedence recorded.
+- **Semantics S1–S20** — one system of record; scopes and flows reference declared connectors; gates map to enrolled approvers; secrets references match their source; retention ordering; no secret values; provider capabilities cover every gated flow; native precedence recorded.
 - **Workspace check** — every flow has a spec file; every connector has a proficiency note; the harness requirements document exists.
 - **Secrets check** — every reference exists in the declared source (existence only, never the value).
 

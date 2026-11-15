@@ -1,6 +1,6 @@
 # Business AI Assistant — Architecture Framework
 
-*System: Baxter | Blueprint v0.2.2 | Status: foundational architecture*
+*System: Baxter | Blueprint v0.2.3 | Status: foundational architecture*
 
 **Objective.** A repeatable business system assembled from a **fixed, portable blueprint** plus **swappable services and hosts**. The blueprint is identical in every deployment; the agent platform, the services, and the automation provider are chosen per deployment.
 
@@ -338,7 +338,7 @@ deployment:
   assistant:
     name: Nora                  # owner-chosen at Stage 0 — the runtime identity
     slug: nora
-  core_version: 0.2.2
+  core_version: 0.2.3
   business_context: business-context.md
 
 harness:
@@ -395,8 +395,14 @@ roles:
   customer_engagement: { active: false }
 
 channels:
-  messaging: telegram/baxter-example
-  approvers: { owner: t.me/owner-handle, staff: [] }
+  messaging: owner-app                    # primary endpoint id
+  endpoints:
+    - { id: owner-app, kind: native, provider: rakazo, audience: owner }
+    - { id: staff-slack, kind: external, provider: slack, audience: staff,
+        address: "#harbour-ops" }
+    - { id: staff-telegram, kind: external, provider: telegram, audience: staff,
+        address: "@harbour-assistant" }
+  approvers: { owner: slack/U123, staff: ["slack/U456"] }
   customer_chat: []
 
 flows:
@@ -423,9 +429,11 @@ backup:
   remote: git@example.com:business/baxter-config.git
 ```
 
+**Channels — native or external.** A host may supply its own channel (desktop/web app, phone client) or rely on an external messaging service (Telegram, Slack, WhatsApp, SMS, …). Each is declared as an endpoint with its kind, provider and audience, so onboarding can ask in plain language and setup can verify a real message on each. At least one endpoint must reach the owner; staff endpoints are optional.
+
 **Identity.** `deployment.assistant` holds the owner-chosen name and slug; every runtime surface uses it. Baxter is only the codename.
 
-**Schema.** `references/deployment.schema.json` (`schema_version: 2`) enforces structure and the semantic rules S1–S19. A config that fails either halts setup.
+**Schema.** `references/deployment.schema.json` (`schema_version: 2`) enforces structure and the semantic rules S1–S20. A config that fails either halts setup.
 
 ### 8.3 How Baxter Learns the Connectors
 
@@ -494,7 +502,7 @@ A harness is the agent platform a deployment runs on. The blueprint uses eleven 
 
 | Port | What it must provide |
 |---|---|
-| Channel | A message surface for the owner and staff |
+| Channel | A message surface for the owner and staff — native to the host, external, or both |
 | Runtime | An agent loop that can follow the brief and call tools |
 | Instructions | A way to load the skill, brief, or operator runbook |
 | Roles | Isolation between coordinator and specialists, or a declared substitute |

@@ -22,7 +22,7 @@ If you cannot clone, read these files from the repository root:
 1. **Ask the owner what to call you.** Offer up to three short suggestions; let them decide. Record the name and use it from then on. It is not a credential.
 2. **Verify the owner** — their name, role and handle on this channel — and state where their logins will live (the platform's secret store, a vault, or both).
 3. **Run onboarding Stages 0–6** using `references/onboarding-protocol.md` and `references/business-questionnaire.md`. One to three questions at a time, plain language. Keep a draft in `baxter-workspace/deployments/<business>/onboarding-draft.md`.
-4. **Write and validate the config** against `references/deployment.schema.json` (schema v2, rules S1–S19), then show it in full and wait for approval.
+4. **Write and validate the config** against `references/deployment.schema.json` (schema v2, rules S1–S20), then show it in full and wait for approval.
 5. **Commit** the config and workspace.
 6. **Run setup** using `references/setup-protocol.md` and the connector packs for the services the owner selected. Connect one service at a time, verify each, and record flow and run ids.
 

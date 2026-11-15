@@ -36,6 +36,8 @@ Grade each port `native`, `partial`, `degraded` or `absent`. A `partial` needs a
 | Secrets | | | |
 | Audit | | | |
 
+**Channel options:** native endpoints (app, web, phone) and external ones (Telegram, Slack, WhatsApp, SMS) — list what the host supports and which is the default.
+
 **Minimum floor:** instructions, tools, workspace. If any is `absent`, this product is a service, not a Baxter host.
 
 ## 4. Delivery mode

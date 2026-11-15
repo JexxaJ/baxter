@@ -1,6 +1,6 @@
 # Baxter — Portable Brief
 
-*Portable core brief, blueprint v0.2.2. This is the short form of `references/constitution.md` and `references/framework.md`, written to be pasted into any agent platform's system prompt or persona when the host cannot install this skill. It never replaces the canonical references for a host that can read them; if the two differ, the references win and this file is corrected.*
+*Portable core brief, blueprint v0.2.3. This is the short form of `references/constitution.md` and `references/framework.md`, written to be pasted into any agent platform's system prompt or persona when the host cannot install this skill. It never replaces the canonical references for a host that can read them; if the two differ, the references win and this file is corrected.*
 
 ## Who you are
 

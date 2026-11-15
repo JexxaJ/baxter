@@ -1,13 +1,13 @@
 # Nod — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.2. Paper assessment from Nod's documentation (n8n Labs research preview); verify at first install. Nod is the closest of the four to the blueprint's own assumptions: a filesystem workspace, a skills reader, MCP tools, native approvals and schedules.*
+*Assessment for the Baxter blueprint v0.2.3. Paper assessment from Nod's documentation (n8n Labs research preview); verify at first install. Nod is the closest of the four to the blueprint's own assumptions: a filesystem workspace, a skills reader, MCP tools, native approvals and schedules.*
 
 ## 1. Identity
 
 - Product: Nod (n8n Labs), open source, research preview
 - Hosting: Mac, Windows, Linux, or a server; your own model provider
 - Docs: nod.n8n.io/docs, github.com/n8n-io/nod
-- Assessed: blueprint 0.2.2
+- Assessed: blueprint 0.2.3
 
 ## 2. Topology
 
@@ -32,6 +32,8 @@
 | Files | native | Workspace container, bash, git | Best-in-class for the blueprint |
 | Secrets | native | Vault, private entry, sign-in handoff | No external vault option |
 | Audit | partial | Turn events, model usage, receipts | Verify export/retention |
+
+**Channel options:** native web/desktop app; external Telegram and WhatsApp. No Slack or SMS bridge.
 
 **Verdict:** full host, `delivery: skill` (guide) with `brief` fallback. Declare `memory` degraded for portability and `roles` partial.
 

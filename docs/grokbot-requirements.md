@@ -1,6 +1,6 @@
 # Grok Bot — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.2. Paper assessment from product documentation; verify at first install. Grok Bot is a hosted, consumer-style bot platform: excellent reach, the least operator control of the four.*
+*Assessment for the Baxter blueprint v0.2.3. Paper assessment from product documentation; verify at first install. Grok Bot is a hosted, consumer-style bot platform: excellent reach, the least operator control of the four.*
 
 ## 1. Identity
 
@@ -8,7 +8,7 @@
 - Hosting: vendor cloud only (desktop, mobile, Slack, X)
 - Licence: proprietary service
 - Docs: docs.x.ai/grok-bot
-- Assessed: blueprint 0.2.2
+- Assessed: blueprint 0.2.3
 
 ## 2. Topology
 
@@ -32,6 +32,8 @@
 | Files | native | Cloud computer filesystem | No git or operator access to the disk |
 | Secrets | native | Connector OAuth + logins on the cloud computer | No vault integration |
 | Audit | degraded | Activity only | No structured export; ledger must be kept by the assistant/operator |
+
+**Channel options:** native desktop/mobile app, Slack and X. No Telegram or WhatsApp.
 
 **Verdict:** full host, `delivery: brief`, with `files`, `secrets`, `audit` and `memory` effectively degraded for portability. A deployment whose config must be portable should treat the workspace as operator-held.
 
