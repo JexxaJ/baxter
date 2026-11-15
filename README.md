@@ -43,13 +43,13 @@ A deployment may have **zero** automation providers and zero flows; providers ar
 | `references/setup-protocol.md` | How Baxter connects, builds flows and documents |
 | `connectors/` | Connector Packs — business services, the automation-provider contract, n8n and Zapier |
 | `docs/harness-requirements-template.md` | How a platform is assessed |
-| `docs/<harness>-requirements.md` | Per-platform assessment and runbook (Hermes, Rakazo, Grok Bot, Nod) |
+| `docs/<harness>-requirements.md` | Per-platform assessment and runbook (Hermes, Rakazo, Grok Bot, Nod, OpenMausBot) |
 | `docs/harness-notes.md` | Platform index and assessment rules |
 | `VERSION` | Blueprint release (semver); deployments pin it as `core_version` |
 
 ## Versioning
 
-`VERSION` is the source of truth — currently **0.2.1**, which adds the owner-chosen assistant identity to the 0.2 line (schema v2, host adapters, the automation-provider contract and native secret sources). Released versions are tagged; every deployment pins `core_version`, each pack pins `pack_version`, and each host pins `adapter_version`. Updates are explicit (`npx skills update`), never silent.
+`VERSION` is the source of truth — currently **0.2.2**, which adds the owner-chosen assistant identity to the 0.2 line (schema v2, host adapters, the automation-provider contract and native secret sources). Released versions are tagged; every deployment pins `core_version`, each pack pins `pack_version`, and each host pins `adapter_version`. Updates are explicit (`npx skills update`), never silent.
 
 ## Operating rules
 

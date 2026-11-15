@@ -1,6 +1,6 @@
 # Connector Pack — Zapier (automation provider)
 
-*Status: provider pack, blueprint v0.2.1. Included because owners often already pay for Zapier; it is the clearest example of a `manual`-authoring provider.*
+*Status: provider pack, blueprint v0.2.2. Included because owners often already pay for Zapier; it is the clearest example of a `manual`-authoring provider.*
 
 ## Version
 

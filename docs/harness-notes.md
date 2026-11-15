@@ -10,6 +10,7 @@
 | Rakazo | [`rakazo-requirements.md`](rakazo-requirements.md) | brief | Bots with their own computer; routines; app brokers |
 | Grok Bot | [`grokbot-requirements.md`](grokbot-requirements.md) | brief | Hosted only; strongest reach, least operator control |
 | Nod (n8n Labs) | [`nod-requirements.md`](nod-requirements.md) | skill | Filesystem + skills reader; single owner |
+| OpenMausBot | [`openmausbot-requirements.md`](openmausbot-requirements.md) | brief | Local-first bot roster; strong approvals, native secrets only |
 | Generic MCP + CLI | — | brief/operator | Use the template; minimum floor applies |
 
 Template for a new platform: [`harness-requirements-template.md`](harness-requirements-template.md).

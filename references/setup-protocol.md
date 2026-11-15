@@ -1,6 +1,6 @@
 # Core Setup Protocol
 
-*Status: blueprint v0.2.1. Authoritative in `references/framework.md` §8.4; identical in every deployment (§8.1). Consumes the Deployment Config produced by onboarding and performs the **doing**: host adapter, connections, flows, verification.*
+*Status: blueprint v0.2.2. Authoritative in `references/framework.md` §8.4; identical in every deployment (§8.1). Consumes the Deployment Config produced by onboarding and performs the **doing**: host adapter, connections, flows, verification.*
 
 ## 1. Purpose and Division of Labour
 

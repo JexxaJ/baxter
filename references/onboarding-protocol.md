@@ -1,6 +1,6 @@
 # Core Onboarding Protocol
 
-*Status: blueprint v0.2.1. Authoritative in `references/framework.md` §8.6; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). Onboarding runs **before** Setup (§8.4) and produces the Deployment Config (§8.2) that setup consumes.*
+*Status: blueprint v0.2.2. Authoritative in `references/framework.md` §8.6; this file is the agent-facing procedure and is **identical in every deployment** (§8.1). Onboarding runs **before** Setup (§8.4) and produces the Deployment Config (§8.2) that setup consumes.*
 
 ## 1. Purpose
 

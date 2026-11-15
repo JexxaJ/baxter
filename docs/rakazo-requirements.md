@@ -1,13 +1,13 @@
 # Rakazo — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.1. Paper assessment from product documentation; verify the conformance test at first install. Rakazo is a bot platform with its own computer, routines, memory and app brokers, and imports agents from other platforms.*
+*Assessment for the Baxter blueprint v0.2.2. Paper assessment from product documentation; verify the conformance test at first install. Rakazo is a bot platform with its own computer, routines, memory and app brokers, and imports agents from other platforms.*
 
 ## 1. Identity
 
 - Product: Rakazo (rakazo.com), open source, Apache-2.0
 - Hosting: self-hosted via Docker (Postgres + worker + app) or hosted cloud (beta)
 - Docs: rakazo.com/docs, github.com/elie222/rakazo
-- Assessed: blueprint 0.2.1
+- Assessed: blueprint 0.2.2
 
 ## 2. Topology
 

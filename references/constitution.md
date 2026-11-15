@@ -1,6 +1,6 @@
 # Core Constitution
 
-*Status: blueprint v0.2.1. The authoritative rules live in `references/framework.md`; this file is the immutable behaviour of Baxter and is **identical in every deployment** (§8.1). The Deployment Config — never this file — carries per-business differences. When a host cannot load this file, `references/brief.md` carries the same rules in portable form.*
+*Status: blueprint v0.2.2. The authoritative rules live in `references/framework.md`; this file is the immutable behaviour of Baxter and is **identical in every deployment** (§8.1). The Deployment Config — never this file — carries per-business differences. When a host cannot load this file, `references/brief.md` carries the same rules in portable form.*
 
 ## 1. Identity
 

@@ -1,6 +1,6 @@
 # Core Business Questionnaire
 
-*Status: blueprint v0.2.1. Executed during onboarding (`onboarding-protocol.md`); identical in every deployment (§8.1). Covers Stages 0, 1, 2 and 4 — Stage 3 questions live in each Connector Pack.*
+*Status: blueprint v0.2.2. Executed during onboarding (`onboarding-protocol.md`); identical in every deployment (§8.1). Covers Stages 0, 1, 2 and 4 — Stage 3 questions live in each Connector Pack.*
 
 **How to read this file.** Each question has an **ID**, the **ask** (what the owner actually hears), and a **maps to** (the config destination). Questions marked *(gate-critical)* control who can authorize consequential actions.
 

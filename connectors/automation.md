@@ -1,6 +1,6 @@
 # Connector Pack — Automation Provider (contract)
 
-*Status: provider contract, blueprint v0.2.1. An automation provider is **not** a business capability and **not** a core component. It is an optional connector whose meta-capability is to wire other connectors together (§5.1, §7.6).*
+*Status: provider contract, blueprint v0.2.2. An automation provider is **not** a business capability and **not** a core component. It is an optional connector whose meta-capability is to wire other connectors together (§5.1, §7.6).*
 
 ## Version
 

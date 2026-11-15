@@ -1,6 +1,6 @@
 # Connector Pack — n8n (automation provider)
 
-*Status: reference provider pack, blueprint v0.2.1. n8n is the recommended default when a deployment needs a provider — not a core component and not a requirement (§7.6).*
+*Status: reference provider pack, blueprint v0.2.2. n8n is the recommended default when a deployment needs a provider — not a core component and not a requirement (§7.6).*
 
 ## Version
 

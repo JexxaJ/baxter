@@ -1,6 +1,6 @@
 # Grok Bot — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.1. Paper assessment from product documentation; verify at first install. Grok Bot is a hosted, consumer-style bot platform: excellent reach, the least operator control of the four.*
+*Assessment for the Baxter blueprint v0.2.2. Paper assessment from product documentation; verify at first install. Grok Bot is a hosted, consumer-style bot platform: excellent reach, the least operator control of the four.*
 
 ## 1. Identity
 
@@ -8,7 +8,7 @@
 - Hosting: vendor cloud only (desktop, mobile, Slack, X)
 - Licence: proprietary service
 - Docs: docs.x.ai/grok-bot
-- Assessed: blueprint 0.2.1
+- Assessed: blueprint 0.2.2
 
 ## 2. Topology
 

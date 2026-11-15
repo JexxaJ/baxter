@@ -57,6 +57,7 @@ Pick the matching requirements document before starting:
 | Rakazo | `docs/rakazo-requirements.md` |
 | Grok Bot | `docs/grokbot-requirements.md` |
 | Nod | `docs/nod-requirements.md` |
+| OpenMausBot | `docs/openmausbot-requirements.md` |
 | Anything else | `docs/harness-requirements-template.md` |
 
 The host document also says where the workspace lives, which secret source to declare, and how the conformance test is run.

@@ -1,6 +1,6 @@
 # Hermes — Harness Requirements
 
-*Assessment for the Baxter blueprint v0.2.1. Paper assessment from product documentation and existing operator notes; the conformance test in §12 is run at first install and its results recorded here.*
+*Assessment for the Baxter blueprint v0.2.2. Paper assessment from product documentation and existing operator notes; the conformance test in §12 is run at first install and its results recorded here.*
 
 ## 1. Identity
 
@@ -8,7 +8,7 @@
 - Hosting: self-hosted (VPS or local); hosted variant exists
 - Licence: open source
 - Docs: hermes-agent.nousresearch.com
-- Assessed: blueprint 0.2.1
+- Assessed: blueprint 0.2.2
 
 ## 2. Topology
 

@@ -1,6 +1,6 @@
 # Business AI Assistant — Architecture Framework
 
-*System: Baxter | Blueprint v0.2.1 | Status: foundational architecture*
+*System: Baxter | Blueprint v0.2.2 | Status: foundational architecture*
 
 **Objective.** A repeatable business system assembled from a **fixed, portable blueprint** plus **swappable services and hosts**. The blueprint is identical in every deployment; the agent platform, the services, and the automation provider are chosen per deployment.
 
@@ -338,11 +338,11 @@ deployment:
   assistant:
     name: Nora                  # owner-chosen at Stage 0 — the runtime identity
     slug: nora
-  core_version: 0.2.1
+  core_version: 0.2.2
   business_context: business-context.md
 
 harness:
-  platform: rakazo                 # hermes | rakazo | grokbot | nod | generic
+  platform: rakazo                 # hermes | rakazo | grokbot | nod | openmausbot | generic
   delivery: brief                  # skill | brief | operator
   adapter_version: 1.0.0
   ports: { channel: native, runtime: native, instructions: partial,
